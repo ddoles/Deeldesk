@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deeldesk.ai - Responsive UX Design</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           DESIGN TOKENS
+           ============================================ */
+        :root {
+            /* Colors */
+            --color-primary: #0033A0;
+            --color-primary-light: #0052CC;
+            --color-accent: #00D4C4;
+            --color-accent-light: #33E0D0;
+            --color-success: #10B981;
+            --color-warning: #F59E0B;
+            --color-error: #EF4444;
+            --color-gray-50: #F9FAFB;
+            --color-gray-100: #F3F4F6;
+            --color-gray-200: #E5E7EB;
+            --color-gray-300: #D1D5DB;
+            --color-gray-500: #6B7280;
+            --color-gray-700: #374151;
+            --color-gray-900: #111827;
+            --color-bg-primary: #FFFFFF;
+            --color-bg-secondary: #F9FAFB;
+            
+            /* Typography */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --text-sm: 0.875rem;
+            --text-base: 1rem;
+            --text-lg: 1.125rem;
+            --text-xl: 1.25rem;
+            --text-2xl: 1.5rem;
+            --text-3xl: 1.875rem;
+            --font-medium: 500;
+            --font-semibold: 600;
+            --font-bold: 700;
+            
+            /* Spacing */
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-5: 1.25rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            --space-10: 2.5rem;
+            --space-12: 3rem;
+            
+            /* Border Radius */
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-full: 9999px;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            
+            /* Transitions */
+            --transition-base: 200ms ease-in-out;
+            --transition-slow: 300ms ease-in-out;
+        }
+
+        /* ============================================
+           RESET & BASE STYLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--color-bg-secondary);
+            color: var(--color-gray-900);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================
+           APP SHELL
+           ============================================ */
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            background: var(--color-primary);
+            color: white;
+            padding: var(--space-4) var(--space-6);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-md);
+        }
+
+        .app-header h1 {
+            font-size: var(--text-xl);
+            font-weight: var(--font-bold);
+        }
+
+        .app-header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .app-main {
+            flex: 1;
+            padding: var(--space-6);
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ============================================
+           BUTTONS
+           ============================================ */
+        .btn {
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-md);
+            font-weight: var(--font-semibold);
+            font-size: var(--text-base);
+            border: none;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            min-height: 44px; /* Touch target */
+        }
+
+        .btn-primary {
+            background: var(--color-accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-accent-light);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--color-primary);
+            border: 2px solid var(--color-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-icon {
+            padding: var(--space-2);
+            min-width: 44px;
+            background: transparent;
+            color: white;
+        }
+
+        /* ============================================
+           FLOATING ACTION BUTTON (Mobile)
+           ============================================ */
+        .fab {
+            position: fixed;
+            bottom: var(--space-6);
+            right: var(--space-6);
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-full);
+            background: var(--color-accent);
+            color: white;
+            border: none;
+            box-shadow: var(--shadow-xl);
+            font-size: var(--text-2xl);
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-base);
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-2xl);
+        }
+
+        @media (min-width: 1024px) {
+            .fab {
+                display: none;
+            }
+        }
+
+        /* ============================================
+           CARDS
+           ============================================ */
+        .card {
+            background: var(--color-bg-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-gray-200);
+            transition: all var(--transition-base);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+        }
+
+        .card-title {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--color-gray-900);
+        }
+
+        /* ============================================
+           INPUTS
+           ============================================ */
+        .input,
+        .textarea {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--color-gray-300);
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            font-family: var(--font-sans);
+            transition: all var(--transition-base);
+            min-height: 44px; /* Touch target */
+        }
+
+        .textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .input:focus,
+        .textarea:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px rgba(0, 212, 196, 0.1);
+        }
+
+        /* ============================================
+           BADGES
+           ============================================ */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .badge-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        /* ============================================
+           PROGRESS INDICATORS
+           ============================================ */
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--color-gray-200);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            margin: var(--space-4) 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--color-accent);
+            transition: width var(--transition-slow);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .progress-text {
+            font-size: var(--text-sm);
+            color: var(--color-gray-500);
+            margin-top: var(--space-2);
+        }
+
+        /* ============================================
+           LOADING STATES
+           ============================================ */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--color-gray-200);
+            border-top-color: var(--color-accent);
+            border-radius: var(--radius-full);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .streaming-text {
+            color: var(--color-accent);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* ============================================
+           BOTTOM SHEET (Mobile)
+           ============================================ */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--color-bg-primary);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            box-shadow: var(--shadow-xl);
+            transform: translateY(100%);
+            transition: transform var(--transition-slow);
+            z-index: 1000;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: var(--space-6);
+        }
+
+        .bottom-sheet.open {
+            transform: translateY(0);
+        }
+
+        .bottom-sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: var(--color-gray-300);
+            border-radius: var(--radius-full);
+            margin: 0 auto var(--space-4);
+        }
+
+        /* ============================================
+           MODAL
+           ============================================ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: var(--space-4);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-base);
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--color-bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: var(--space-6);
+            transform: scale(0.95);
+            transition: transform var(--transition-base);
+        }
+
+        .modal-overlay.open .modal {
+            transform: scale(1);
+        }
+
+        /* ============================================
+           SCREENS
+           ============================================ */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* ============================================
+           DASHBOARD
+           ============================================ */
+        .dashboard-grid {
+            display: grid;
+            gap: var(--space-6);
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-12) var(--space-6);
+        }
+
+        .empty-state-icon {
+            font-size: var(--text-5xl);
+            margin-bottom: var(--space-4);
+        }
+
+        /* ============================================
+           PROPOSAL GENERATION
+           ============================================ */
+        .generation-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .generation-status {
+            background: var(--color-bg-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .slide-preview {
+            background: var(--color-bg-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-8);
+            margin: var(--space-4) 0;
+            border: 2px dashed var(--color-gray-200);
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .slide-preview.has-content {
+            border: 1px solid var(--color-gray-200);
+            align-items: flex-start;
+        }
+
+        /* ============================================
+           PROPOSAL EDITOR (Desktop Layout)
+           ============================================ */
+        .proposal-editor {
+            display: grid;
+            gap: var(--space-6);
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 1024px) {
+            .proposal-editor {
+                grid-template-columns: 200px 1fr 300px;
+            }
+        }
+
+        .slide-thumbnails {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .slide-thumbnail {
+            background: var(--color-bg-primary);
+            border: 2px solid var(--color-gray-200);
+            border-radius: var(--radius-md);
+            padding: var(--space-3);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-sm);
+            color: var(--color-gray-500);
+        }
+
+        .slide-thumbnail.active {
+            border-color: var(--color-accent);
+            background: var(--color-accent-light);
+            color: white;
+        }
+
+        .slide-canvas {
+            background: var(--color-bg-primary);
+            border-radius: var(--radius-lg);
+            min-height: 600px;
+            padding: var(--space-8);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .context-panel {
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        /* ============================================
+           RESPONSIVE UTILITIES
+           ============================================ */
+        .mobile-only {
+            display: block;
+        }
+
+        .desktop-only {
+            display: none;
+        }
+
+        @media (min-width: 1024px) {
+            .mobile-only {
+                display: none;
+            }
+            
+            .desktop-only {
+                display: block;
+            }
+        }
+
+        /* ============================================
+           UTILITY CLASSES
+           ============================================ */
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-4 {
+            margin-bottom: var(--space-4);
+        }
+
+        .mb-6 {
+            margin-bottom: var(--space-6);
+        }
+
+        .mt-4 {
+            margin-top: var(--space-4);
+        }
+
+        .mt-6 {
+            margin-top: var(--space-6);
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .gap-4 {
+            gap: var(--space-4);
+        }
+
+        .gap-6 {
+            gap: var(--space-6);
+        }
+
+        .w-full {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>Deeldesk.ai</h1>
+            <div class="app-header-actions">
+                <button class="btn-icon" onclick="toggleSafeMode()" title="Toggle Safe Mode">
+                    🛡️
+                </button>
+                <button class="btn-icon mobile-only" onclick="toggleMenu()" title="Menu">
+                    ☰
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Dashboard Screen -->
+            <div id="dashboard" class="screen active">
+                <h2 class="mb-6">Dashboard</h2>
+                
+                <div class="mb-6">
+                    <button class="btn btn-primary w-full" onclick="goTo('new-proposal')">
+                        + New Proposal
+                    </button>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent Proposals</h3>
+                        </div>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📄</div>
+                            <p class="text-gray-500">No proposals yet</p>
+                            <button class="btn btn-secondary mt-4" onclick="goTo('new-proposal')">
+                                Create Your First Proposal
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Quick Chat</h3>
+                        </div>
+                        <p class="text-gray-500 mb-4">Ask anything about your knowledge base</p>
+                        <input type="text" class="input mb-4" placeholder="What products do we offer?">
+                        <button class="btn btn-primary w-full">Ask</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Win Insights</h3>
+                        </div>
+                        <p class="text-gray-500">No data yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Proposal Screen -->
+            <div id="new-proposal" class="screen">
+                <div class="generation-container">
+                    <h2 class="mb-6">New Proposal</h2>
+                    
+                    <div class="card mb-6">
+                        <label class="mb-4" style="display: block; font-weight: var(--font-semibold);">
+                            Describe your deal
+                        </label>
+                        <textarea 
+                            class="textarea mb-4" 
+                            placeholder="e.g., Acme Bank vs Snowflake, budget $1M, emphasize security and compliance..."
+                            rows="6"
+                        ></textarea>
+                        <div class="flex gap-4">
+                            <button class="btn btn-primary" onclick="startGeneration()">
+                                Generate Proposal
+                            </button>
+                            <button class="btn btn-secondary" onclick="showPasteSheet()">
+                                Add Context
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Generation Status -->
+                    <div id="generation-status" class="generation-status" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <p class="progress-text" id="progress-text">Starting generation...</p>
+                        <div class="streaming-text mt-4" id="streaming-text"></div>
+                    </div>
+
+                    <!-- Slide Preview -->
+                    <div id="slide-preview" class="slide-preview" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Generating slides...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proposal Editor Screen -->
+            <div id="editor" class="screen">
+                <div class="proposal-editor">
+                    <!-- Slide Thumbnails (Desktop) -->
+                    <div class="slide-thumbnails desktop-only">
+                        <div class="slide-thumbnail active">1</div>
+                        <div class="slide-thumbnail">2</div>
+                        <div class="slide-thumbnail">3</div>
+                        <div class="slide-thumbnail">4</div>
+                        <div class="slide-thumbnail">5</div>
+                    </div>
+
+                    <!-- Main Canvas -->
+                    <div class="slide-canvas">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2>Slide 1: Title</h2>
+                            <div class="flex gap-4">
+                                <button class="btn btn-secondary">Export</button>
+                                <button class="btn btn-primary" onclick="goTo('share')">Share Link</button>
+                            </div>
+                        </div>
+                        <div style="text-align: center; padding: var(--space-12);">
+                            <h1 style="font-size: var(--text-4xl); margin-bottom: var(--space-4);">
+                                Why Deeldesk for Acme Bank
+                            </h1>
+                            <p style="font-size: var(--text-xl); color: var(--color-gray-500);">
+                                Transforming Financial Services with AI-Powered Solutions
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Context Panel (Desktop) -->
+                    <div class="context-panel desktop-only">
+                        <h3 class="mb-4">Deal Context</h3>
+                        <div class="card mb-4">
+                            <p class="text-sm text-gray-500">
+                                Budget: $1M<br>
+                                Competitor: Snowflake<br>
+                                Focus: Security & Compliance
+                            </p>
+                        </div>
+                        <h3 class="mb-4">Explain This Slide</h3>
+                        <p class="text-sm text-gray-500">
+                            This slide introduces the proposal and sets the tone for the presentation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Share Screen -->
+            <div id="share" class="screen">
+                <div class="card" style="max-width: 500px; margin: 0 auto;">
+                    <h2 class="mb-6">Share Proposal</h2>
+                    <div class="mb-4">
+                        <label class="mb-2" style="display: block; font-weight: var(--font-semibold);">
+                            Shareable Link
+                        </label>
+                        <div class="flex gap-2">
+                            <input 
+                                type="text" 
+                                class="input" 
+                                value="https://deeldesk.ai/share/abc123"
+                                readonly
+                            >
+                            <button class="btn btn-secondary">Copy</button>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox">
+                            <span>Require password</span>
+                        </label>
+                    </div>
+                    <div class="flex gap-4">
+                        <button class="btn btn-primary w-full">Generate Link</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Floating Action Button (Mobile) -->
+        <button class="fab" onclick="goTo('new-proposal')" title="New Proposal">
+            +
+        </button>
+
+        <!-- Bottom Sheet for Context (Mobile) -->
+        <div id="paste-sheet" class="bottom-sheet">
+            <div class="bottom-sheet-handle"></div>
+            <h3 class="mb-4">Add Deal Context</h3>
+            <p class="text-sm text-gray-500 mb-4">
+                Paste or drag/drop call transcripts, emails, or meeting notes. This enhances your proposal and builds toward your Deal Arc.
+            </p>
+            <textarea 
+                class="textarea mb-4" 
+                placeholder="Paste content here..."
+                rows="8"
+            ></textarea>
+            <div class="flex gap-4">
+                <button class="btn btn-primary w-full" onclick="addContext()">
+                    Add to Proposal
+                </button>
+                <button class="btn btn-secondary w-full" onclick="hidePasteSheet()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Overlay -->
+        <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+            <div class="modal" onclick="event.stopPropagation()">
+                <h2 class="mb-4">Settings</h2>
+                <div class="mb-4">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="safe-mode-toggle">
+                        <span>Safe Mode</span>
+                    </label>
+                    <p class="text-sm text-gray-500 mt-2">
+                        Eliminates AI hallucinations by using [VERIFY] placeholders for uncertain content.
+                    </p>
+                </div>
+                <button class="btn btn-primary w-full" onclick="closeModal()">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Screen Navigation
+        function goTo(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const screen = document.getElementById(screenId);
+            if (screen) {
+                screen.classList.add('active');
+                window.scrollTo(0, 0);
+            }
+        }
+
+        // Safe Mode Toggle
+        let safeMode = false;
+        function toggleSafeMode() {
+            safeMode = !safeMode;
+            // In real app, this would update settings
+            alert(`Safe Mode: ${safeMode ? 'ON' : 'OFF'}`);
+        }
+
+        // Menu Toggle (Mobile)
+        function toggleMenu() {
+            document.getElementById('modal-overlay').classList.add('open');
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('open');
+        }
+
+        // Bottom Sheet Controls
+        function showPasteSheet() {
+            document.getElementById('paste-sheet').classList.add('open');
+        }
+
+        function hidePasteSheet() {
+            document.getElementById('paste-sheet').classList.remove('open');
+        }
+
+        function addContext() {
+            alert('Context added! Regenerate to see changes.');
+            hidePasteSheet();
+        }
+
+        // Proposal Generation Simulation
+        function startGeneration() {
+            const statusEl = document.getElementById('generation-status');
+            const previewEl = document.getElementById('slide-preview');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            const streamingText = document.getElementById('streaming-text');
+
+            statusEl.style.display = 'block';
+            previewEl.style.display = 'flex';
+            previewEl.classList.remove('has-content');
+
+            let progress = 0;
+            const steps = [
+                { progress: 10, text: 'Understanding your requirements...' },
+                { progress: 25, text: 'Retrieving relevant context...' },
+                { progress: 40, text: 'Crafting proposal structure...' },
+                { progress: 60, text: 'Generating slide 1 of 5...' },
+                { progress: 75, text: 'Generating slide 3 of 5...' },
+                { progress: 90, text: 'Finalizing proposal...' },
+                { progress: 100, text: 'Complete!' }
+            ];
+
+            let stepIndex = 0;
+            const interval = setInterval(() => {
+                if (stepIndex < steps.length) {
+                    const step = steps[stepIndex];
+                    progress = step.progress;
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = step.text;
+                    
+                    if (step.text.includes('Generating slide')) {
+                        streamingText.textContent = step.text;
+                    }
+                    
+                    stepIndex++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        previewEl.classList.add('has-content');
+                        previewEl.innerHTML = `
+                            <h2 style="font-size: var(--text-3xl); margin-bottom: var(--space-4);">
+                                Why Deeldesk for Acme Bank
+                            </h2>
+                            <p style="color: var(--color-gray-500);">
+                                Transforming Financial Services with AI-Powered Solutions
+                            </p>
+                        `;
+                        setTimeout(() => goTo('editor'), 1000);
+                    }, 500);
+                }
+            }, 800);
+        }
+
+        // Close bottom sheet when clicking outside
+        document.getElementById('paste-sheet').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hidePasteSheet();
+            }
+        });
+    </script>
+</body>
+</html>
+

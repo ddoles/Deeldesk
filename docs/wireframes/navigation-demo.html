@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deeldesk.ai - Navigation System Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #0033A0;
+            --color-accent: #00D4C4;
+            --color-gray-200: #E5E7EB;
+            --color-gray-500: #6B7280;
+            --color-gray-900: #111827;
+            --color-bg-primary: #FFFFFF;
+            --color-bg-secondary: #F9FAFB;
+            --space-4: 1rem;
+            --space-6: 1.5rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --transition-base: 200ms ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--color-bg-secondary);
+            color: var(--color-gray-900);
+        }
+
+        /* ============================================
+           DESKTOP LAYOUT (1024px+)
+           ============================================ */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: var(--color-bg-primary);
+            border-right: 1px solid var(--color-gray-200);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 50;
+        }
+
+        .sidebar-header {
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--color-gray-200);
+        }
+
+        .sidebar-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: var(--space-4);
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-decoration: none;
+            color: var(--color-gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item:hover {
+            background: var(--color-bg-secondary);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 212, 196, 0.1);
+            color: var(--color-accent);
+            border-left: 3px solid var(--color-accent);
+            padding-left: calc(var(--space-4) - 3px);
+        }
+
+        .nav-item-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-item-badge {
+            margin-left: auto;
+            background: var(--color-accent);
+            color: white;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            padding: var(--space-4);
+            border-top: 1px solid var(--color-gray-200);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 240px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .app-header {
+            background: var(--color-primary);
+            color: white;
+            padding: var(--space-4) var(--space-6);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            box-shadow: var(--shadow-md);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-separator {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .breadcrumb-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+        }
+
+        .breadcrumb-link:hover {
+            color: white;
+        }
+
+        .breadcrumb-current {
+            color: white;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .header-action {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 0.5rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .header-action:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Content */
+        .content-area {
+            flex: 1;
+            padding: var(--space-6);
+            overflow-y: auto;
+        }
+
+        /* ============================================
+           MOBILE LAYOUT (<1024px)
+           ============================================ */
+        @media (max-width: 1023px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform var(--transition-base);
+                box-shadow: var(--shadow-lg);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            /* Bottom Navigation */
+            .bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: var(--color-bg-primary);
+                border-top: 1px solid var(--color-gray-200);
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                padding: 0.5rem;
+                padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+                z-index: 100;
+                box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+
+            .bottom-nav-item {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.25rem;
+                padding: 0.5rem;
+                text-decoration: none;
+                color: var(--color-gray-500);
+                font-size: 0.75rem;
+                position: relative;
+            }
+
+            .bottom-nav-item.active {
+                color: var(--color-accent);
+            }
+
+            .bottom-nav-item.active::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 3px;
+                background: var(--color-accent);
+                border-radius: 0 0 3px 3px;
+            }
+
+            .bottom-nav-icon {
+                font-size: 1.25rem;
+            }
+
+            .bottom-nav-fab {
+                position: absolute;
+                bottom: 1.5rem;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background: var(--color-accent);
+                color: white;
+                border: none;
+                box-shadow: var(--shadow-lg);
+                font-size: 1.5rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 101;
+            }
+
+            .content-area {
+                padding-bottom: 5rem; /* Space for bottom nav */
+            }
+
+            .breadcrumbs {
+                display: none; /* Hide on mobile */
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+
+            .bottom-nav {
+                display: none;
+            }
+        }
+
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 45;
+        }
+
+        @media (max-width: 1023px) {
+            .sidebar-overlay.open {
+                display: block;
+            }
+        }
+
+        /* Demo Content */
+        .demo-card {
+            background: var(--color-bg-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+            box-shadow: var(--shadow-md);
+        }
+
+        .demo-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: var(--space-4);
+        }
+
+        .demo-text {
+            color: var(--color-gray-500);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Desktop Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">Deeldesk.ai</div>
+        </div>
+        
+        <div class="sidebar-nav">
+            <a href="#" class="nav-item active" onclick="setActive(this); return false;">
+                <span class="nav-item-icon">🏠</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" onclick="setActive(this); return false;">
+                <span class="nav-item-icon">💼</span>
+                <span>Opportunities</span>
+                <span class="nav-item-badge">5</span>
+            </a>
+            <a href="#" class="nav-item" onclick="setActive(this); return false;">
+                <span class="nav-item-icon">📄</span>
+                <span>Proposals</span>
+            </a>
+            <a href="#" class="nav-item" onclick="setActive(this); return false;">
+                <span class="nav-item-icon">📚</span>
+                <span>Knowledge Base</span>
+            </a>
+            <a href="#" class="nav-item" onclick="setActive(this); return false;">
+                <span class="nav-item-icon">⚙️</span>
+                <span>Settings</span>
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="user-menu">
+                <div class="user-avatar">JD</div>
+                <div>
+                    <div style="font-size: 0.875rem; font-weight: 600;">John Doe</div>
+                    <div style="font-size: 0.75rem; color: var(--color-gray-500);">john@example.com</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button class="header-action mobile-menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+                    ☰
+                </button>
+                <div class="breadcrumbs">
+                    <a href="#" class="breadcrumb-link">Dashboard</a>
+                    <span class="breadcrumb-separator">›</span>
+                    <span class="breadcrumb-current">Overview</span>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="header-action" aria-label="Safe Mode">
+                    🛡️
+                </button>
+                <button class="header-action" aria-label="Notifications">
+                    🔔
+                </button>
+                <div class="user-avatar" style="width: 32px; height: 32px;">JD</div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <div class="demo-card">
+                <h1 class="demo-title">Navigation System Demo</h1>
+                <p class="demo-text">
+                    This demo shows the responsive navigation system for Deeldesk.ai.
+                </p>
+            </div>
+
+            <div class="demo-card">
+                <h2 class="demo-title">Desktop Navigation (1024px+)</h2>
+                <p class="demo-text">
+                    On desktop, you'll see a persistent left sidebar with all navigation items.
+                    The sidebar is always visible and provides quick access to all sections.
+                </p>
+                <ul style="margin-top: var(--space-4); padding-left: var(--space-6); color: var(--color-gray-500);">
+                    <li>Persistent sidebar (240px wide)</li>
+                    <li>Active state indicators</li>
+                    <li>Badge counts for items</li>
+                    <li>User menu in footer</li>
+                </ul>
+            </div>
+
+            <div class="demo-card">
+                <h2 class="demo-title">Mobile Navigation (<1024px)</h2>
+                <p class="demo-text">
+                    On mobile and tablet, the sidebar is hidden by default and accessible via hamburger menu.
+                    A bottom navigation bar provides quick access to main sections.
+                </p>
+                <ul style="margin-top: var(--space-4); padding-left: var(--space-6); color: var(--color-gray-500);">
+                    <li>Hamburger menu in header</li>
+                    <li>Bottom navigation bar</li>
+                    <li>FAB for "New Proposal"</li>
+                    <li>Touch-friendly targets (44px+)</li>
+                </ul>
+            </div>
+
+            <div class="demo-card">
+                <h2 class="demo-title">Try It Out</h2>
+                <p class="demo-text">
+                    Resize your browser window to see the navigation adapt. On mobile sizes, you'll see:
+                </p>
+                <ul style="margin-top: var(--space-4); padding-left: var(--space-6); color: var(--color-gray-500);">
+                    <li>Bottom navigation bar at the bottom</li>
+                    <li>Hamburger menu (☰) in the header</li>
+                    <li>Sidebar slides in from left when opened</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="bottom-nav-item active" onclick="setBottomNavActive(this); return false;">
+            <span class="bottom-nav-icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="setBottomNavActive(this); return false;">
+            <span class="bottom-nav-icon">💼</span>
+            <span>Opps</span>
+        </a>
+        <button class="bottom-nav-fab" onclick="alert('New Proposal');">
+            +
+        </button>
+        <a href="#" class="bottom-nav-item" onclick="setBottomNavActive(this); return false;">
+            <span class="bottom-nav-icon">📚</span>
+            <span>KB</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="setBottomNavActive(this); return false;">
+            <span class="bottom-nav-icon">⚙️</span>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <script>
+        // Sidebar toggle (mobile)
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+        }
+
+        // Set active nav item (desktop)
+        function setActive(element) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+            closeSidebar(); // Close on mobile after selection
+        }
+
+        // Set active bottom nav item (mobile)
+        function setBottomNavActive(element) {
+            document.querySelectorAll('.bottom-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+        }
+
+        // Close sidebar when clicking outside (mobile)
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (window.innerWidth < 1024) {
+                if (!sidebar.contains(event.target) && 
+                    !event.target.classList.contains('mobile-menu-toggle') &&
+                    sidebar.classList.contains('open')) {
+                    closeSidebar();
+                }
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape closes sidebar
+            if (e.key === 'Escape') {
+                closeSidebar();
+            }
+            
+            // Cmd/Ctrl + K for search (demo)
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                alert('Search (Command Palette) - Coming in Phase 2');
+            }
+        });
+    </script>
+</body>
+</html>
+
