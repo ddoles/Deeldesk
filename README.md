@@ -324,17 +324,25 @@ All proposals are children of Opportunities, reflecting how deals have multiple 
 
 ### Context Assembly Engine
 
-Dynamically assembles context for each generation:
+Dynamically assembles context for each generation. See [docs/architecture/CONTEXT_ASSEMBLY.md](./docs/architecture/CONTEXT_ASSEMBLY.md) for complete documentation.
 
-| Source | Allocation | Content |
-|--------|------------|---------|
-| Business Model | Always | Organization's business model summary (when available) |
-| Deal Context | 40% | Opportunity-specific info, stakeholders, requirements |
-| Products | 30% | Relevant product catalog entries |
-| Competitive | 20% | Battlecards for mentioned competitors |
-| Playbooks | 10% | Relevant sales playbooks, objection handling |
+**Always-Included Context (Foundational):**
 
-The Business Model Summary provides foundational company-level context that informs all proposal generations, ensuring consistent positioning and messaging.
+| Source | Budget | Content |
+|--------|--------|---------|
+| Business Model | ~500 tokens | Organization's business model summary |
+| Brand Context | ~200 tokens | Voice, tone, colors, guidelines |
+
+**RAG-Retrieved Context (Token-Budgeted):**
+
+| Source | Allocation | Truncation Priority | Content |
+|--------|------------|---------------------|---------|
+| Deal Context | 40% | 1 (last) | Opportunity-specific info, stakeholders, requirements |
+| Products | 30% | 2 | Relevant product catalog entries |
+| Competitive | 20% | 3 | Battlecards for mentioned competitors |
+| Playbooks | 10% | 4 (first) | Relevant sales playbooks, objection handling |
+
+The Business Model Summary and Brand Context provide foundational company-level context that informs all proposal generations, ensuring consistent positioning and messaging. These are never truncated. When context exceeds limits, RAG-retrieved content is truncated by priority (Playbooks first, Deal Context last).
 
 ---
 

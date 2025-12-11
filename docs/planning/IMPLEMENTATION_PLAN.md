@@ -722,11 +722,26 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 - **Default:** Anthropic Direct API (Free/Pro tiers)
 - **Enterprise:** AWS Bedrock option (Team/Enterprise tiers)
 - **Future:** Google Vertex AI, BYOL (Phase 3)
+- **Embedding Migration:** When switching providers with data sovereignty requirements, embeddings must be re-generated
+- **See:** [LLM Provider Architecture](../architecture/LLM_PROVIDER_ARCHITECTURE.md)
+
+### Context Assembly Engine
+- **Foundational Context (Never Truncated):**
+  - Business Model Summary (~500 tokens)
+  - Brand Context (~200 tokens)
+- **RAG-Retrieved Context (Token-Budgeted):**
+  - Deal Context: 40%
+  - Products: 30%
+  - Competitive: 20%
+  - Playbooks: 10%
+- **Truncation Priority:** Playbooks → Competitive → Products → Deal Context
+- **See:** [Context Assembly Architecture](../architecture/CONTEXT_ASSEMBLY.md)
 
 ### Data Model
 - **Opportunity-Centric:** All proposals are children of Opportunities
 - **Row-Level Security:** All queries filtered by organization_id
 - **Vector Search:** pgvector for semantic search, hybrid with full-text
+- **See:** [Database Schema](../architecture/DATABASE_SCHEMA.sql)
 
 ### Pricing Engine
 - **4-Scenario Matrix:** Fully codified, Partially codified, Opaque/variable, User-provided
@@ -738,9 +753,43 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 - **Fallback:** docxtemplater or puppeteer HTML-to-image if needed
 - **PDF:** Puppeteer for PDF generation from rendered slides
 
+### API Design
+- **Versioning:** URL-based versioning (`/api/v1/`)
+- **Deprecation Policy:** 12-month deprecation period before sunset
+- **See:** [API Versioning Strategy](../architecture/API_VERSIONING.md)
+
+### Operations
+- **Rate Limiting:** Redis-backed sliding window, per-user/org/IP limits
+- **Backups:** Daily full backups, continuous WAL archiving, 7-day PITR
+- **Monitoring:** Prometheus metrics, Grafana dashboards, PagerDuty alerting
+- **See:**
+  - [Rate Limiting](../operations/RATE_LIMITING.md)
+  - [Backup Strategy](../operations/BACKUP_STRATEGY.md)
+  - [Monitoring](../operations/MONITORING.md)
+
+### Security
+- **Secrets:** AWS Secrets Manager with automatic rotation
+- **Encryption:** AES-256 at rest, TLS 1.2+ in transit
+- **See:** [Secrets Management](../security/SECRETS_MANAGEMENT.md)
+
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** December 2025  
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Sprint Plan](./SPRINT_PLAN.md) | Detailed spike documentation and alternative approaches |
+| [Context Assembly](../architecture/CONTEXT_ASSEMBLY.md) | Token budgets and truncation strategy |
+| [LLM Provider Architecture](../architecture/LLM_PROVIDER_ARCHITECTURE.md) | Multi-provider design and embedding migration |
+| [API Versioning](../architecture/API_VERSIONING.md) | API versioning and deprecation policy |
+| [Rate Limiting](../operations/RATE_LIMITING.md) | Rate limits by plan tier |
+| [Backup Strategy](../operations/BACKUP_STRATEGY.md) | Backup and disaster recovery procedures |
+| [Monitoring](../operations/MONITORING.md) | Metrics, alerting, and incident response |
+| [Secrets Management](../security/SECRETS_MANAGEMENT.md) | Credentials and secrets handling |
+
+---
+
+**Document Version:** 1.1
+**Last Updated:** December 2025
 **Next Review:** End of Phase 0 (Day 8)
 

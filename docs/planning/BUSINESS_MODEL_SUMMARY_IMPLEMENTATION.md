@@ -546,12 +546,74 @@ SERPER_API_KEY=...  # Optional
 
 ---
 
-## Open Questions
+## Decisions
 
-1. **Web Search Provider:** Which service to use? (Tavily, Serper, or LLM-native)
-2. **Generation Trigger:** On-demand only, or also prompt during onboarding?
-3. **Rate Limits:** How many generations per day/week?
-4. **Structured vs. Freeform:** Start with simple text or structured sections?
+### Web Search Provider Decision
+
+**Decision:** Use **Claude's native web search capability** as the primary provider.
+
+**Rationale:**
+- Anthropic Claude 3.5 Sonnet supports native web search via tool use
+- Eliminates need for additional third-party API integration
+- Reduces operational complexity and cost
+- Better integration with existing LLM provider architecture
+
+**Fallback Strategy:**
+- If Claude's native search is unavailable or returns insufficient results, fallback to **Tavily API**
+- Tavily selected for:
+  - Purpose-built for AI applications
+  - Structured search results optimized for LLM consumption
+  - Competitive pricing ($0.01 per search)
+  - Good coverage of business/company information
+
+**Implementation:**
+```typescript
+// lib/ai/business-model-generator.ts
+
+export async function generateBusinessModelSummary(
+  organizationName: string,
+  organizationDomain?: string
+): Promise<BusinessModelSummary> {
+  const provider = await getProviderForOrganization(organizationId);
+
+  // Try Claude native search first
+  try {
+    const result = await provider.generateCompletion({
+      systemPrompt: BUSINESS_MODEL_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: buildResearchPrompt(organizationName, organizationDomain) }],
+      tools: [{ type: 'web_search' }], // Claude native search
+    });
+    return parseBusinessModelResponse(result);
+  } catch (error) {
+    // Fallback to Tavily if native search fails
+    if (shouldUseTavilyFallback(error)) {
+      return generateWithTavily(organizationName, organizationDomain);
+    }
+    throw error;
+  }
+}
+```
+
+**Environment Variable:**
+```env
+# Optional: Tavily fallback (only needed if Claude native search unavailable)
+TAVILY_API_KEY=tvly-...
+```
+
+### Other Decisions
+
+| Question | Decision |
+|----------|----------|
+| Generation Trigger | On-demand only (via Knowledge Base UI). Consider onboarding prompt in Phase 2. |
+| Rate Limits | 5 generations/day for Free, 10 for Pro, 20 for Team, unlimited for Enterprise |
+| Structured vs. Freeform | Start with freeform text summary (simpler). Structured sections in Phase 2. |
+
+## Open Questions (Resolved)
+
+~~1. **Web Search Provider:** Which service to use? (Tavily, Serper, or LLM-native)~~ **Resolved:** Claude native with Tavily fallback
+~~2. **Generation Trigger:** On-demand only, or also prompt during onboarding?~~ **Resolved:** On-demand for MVP
+~~3. **Rate Limits:** How many generations per day/week?~~ **Resolved:** See table above
+~~4. **Structured vs. Freeform:** Start with simple text or structured sections?~~ **Resolved:** Freeform text for MVP
 
 ---
 

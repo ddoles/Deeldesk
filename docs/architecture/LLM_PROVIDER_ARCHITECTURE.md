@@ -874,8 +874,271 @@ describe('Provider Parity', () => {
 
 ---
 
+## Embedding Provider Strategy
+
+### The Embedding Compatibility Challenge
+
+Different embedding providers produce vectors in different dimensional spaces that are **not interchangeable**:
+
+| Provider | Model | Dimensions | Notes |
+|----------|-------|------------|-------|
+| OpenAI | text-embedding-3-small | 1536 | Default for Free/Pro tiers |
+| AWS Bedrock | Titan Embed v2 | 1024 | For data sovereignty |
+| Google Vertex | Gecko | 768 | Phase 3 |
+
+**Critical Issue:** If an organization switches LLM providers (e.g., Anthropic Direct → Bedrock), and the embedding provider changes (OpenAI → Titan), all existing embeddings in the knowledge base become invalid because they exist in a different vector space.
+
+### Embedding Provider Selection
+
+```typescript
+// lib/ai/embedding-provider.ts
+
+export interface EmbeddingProviderConfig {
+  provider: 'openai' | 'bedrock_titan' | 'vertex_gecko';
+  dimensions: number;
+}
+
+export function getEmbeddingConfig(
+  llmProvider: string,
+  requiresDataSovereignty: boolean
+): EmbeddingProviderConfig {
+  // For data sovereignty, embedding provider must match LLM provider
+  if (requiresDataSovereignty) {
+    switch (llmProvider) {
+      case 'bedrock':
+        return { provider: 'bedrock_titan', dimensions: 1024 };
+      case 'vertex':
+        return { provider: 'vertex_gecko', dimensions: 768 };
+      default:
+        return { provider: 'openai', dimensions: 1536 };
+    }
+  }
+
+  // Without data sovereignty requirements, standardize on OpenAI
+  // for consistency and cost optimization
+  return { provider: 'openai', dimensions: 1536 };
+}
+```
+
+### Embedding Migration Strategy
+
+When an organization changes providers and embedding migration is required:
+
+#### 1. Detection
+
+```typescript
+// lib/ai/embedding-migration.ts
+
+export async function checkEmbeddingMigrationNeeded(
+  organizationId: string,
+  newLLMProvider: string
+): Promise<MigrationStatus> {
+  const org = await getOrganization(organizationId);
+  const currentEmbeddingProvider = org.settings.embeddingProvider || 'openai';
+  const newEmbeddingConfig = getEmbeddingConfig(
+    newLLMProvider,
+    org.settings.requiresDataSovereignty
+  );
+
+  if (currentEmbeddingProvider === newEmbeddingConfig.provider) {
+    return { migrationNeeded: false };
+  }
+
+  // Count items that need re-embedding
+  const itemCounts = await prisma.$transaction([
+    prisma.product.count({ where: { organizationId, embedding: { not: null } } }),
+    prisma.battlecard.count({ where: { organizationId, embedding: { not: null } } }),
+    prisma.playbook.count({ where: { organizationId, embedding: { not: null } } }),
+    prisma.dealContextItem.count({ where: { opportunity: { organizationId }, embedding: { not: null } } }),
+  ]);
+
+  const totalItems = itemCounts.reduce((a, b) => a + b, 0);
+
+  return {
+    migrationNeeded: true,
+    currentProvider: currentEmbeddingProvider,
+    newProvider: newEmbeddingConfig.provider,
+    itemsToMigrate: totalItems,
+    estimatedTimeMinutes: Math.ceil(totalItems / 100), // ~100 embeddings/minute
+  };
+}
+```
+
+#### 2. Migration Job
+
+```typescript
+// workers/embedding-migration.ts
+
+export async function migrateEmbeddings(
+  organizationId: string,
+  newProvider: EmbeddingProviderConfig
+): Promise<MigrationResult> {
+  const org = await getOrganization(organizationId);
+  const provider = getEmbeddingProvider(newProvider.provider);
+
+  const tables = ['products', 'battlecards', 'playbooks'];
+  let migratedCount = 0;
+  let errorCount = 0;
+
+  for (const table of tables) {
+    // Fetch items in batches
+    const items = await prisma[table].findMany({
+      where: { organizationId, embedding: { not: null } },
+      select: { id: true, content: true }, // content field varies by table
+    });
+
+    for (const batch of chunk(items, 50)) {
+      try {
+        // Generate new embeddings
+        const texts = batch.map(item => item.content);
+        const embeddings = await provider.generateEmbeddings(texts);
+
+        // Update in transaction
+        await prisma.$transaction(
+          batch.map((item, i) =>
+            prisma[table].update({
+              where: { id: item.id },
+              data: { embedding: embeddings[i] },
+            })
+          )
+        );
+
+        migratedCount += batch.length;
+
+        // Emit progress event
+        await emitProgress(organizationId, {
+          type: 'embedding_migration',
+          progress: migratedCount / items.length,
+          table,
+        });
+      } catch (error) {
+        errorCount += batch.length;
+        logger.error('Embedding migration batch failed', {
+          organizationId,
+          table,
+          error,
+        });
+      }
+    }
+  }
+
+  // Update organization settings
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: {
+      settings: {
+        ...org.settings,
+        embeddingProvider: newProvider.provider,
+        embeddingDimensions: newProvider.dimensions,
+        lastEmbeddingMigration: new Date().toISOString(),
+      },
+    },
+  });
+
+  return {
+    success: errorCount === 0,
+    migratedCount,
+    errorCount,
+    newProvider: newProvider.provider,
+  };
+}
+```
+
+#### 3. User Experience
+
+When a user changes LLM provider in settings:
+
+```typescript
+// app/api/settings/llm-provider/route.ts
+
+export async function PUT(request: NextRequest) {
+  const { newProvider } = await request.json();
+  const session = await getServerSession(authOptions);
+
+  // Check if migration is needed
+  const migrationStatus = await checkEmbeddingMigrationNeeded(
+    session.organizationId,
+    newProvider
+  );
+
+  if (migrationStatus.migrationNeeded) {
+    return NextResponse.json({
+      requiresConfirmation: true,
+      warning: `Changing to ${newProvider} requires re-generating ${migrationStatus.itemsToMigrate} embeddings in your knowledge base. This will take approximately ${migrationStatus.estimatedTimeMinutes} minutes. Your knowledge base will remain usable during migration, but search results may be inconsistent until complete.`,
+      estimatedTime: migrationStatus.estimatedTimeMinutes,
+    });
+  }
+
+  // No migration needed, update directly
+  await updateLLMProvider(session.organizationId, newProvider);
+  return NextResponse.json({ success: true });
+}
+
+// Confirmation endpoint
+export async function POST(request: NextRequest) {
+  const { newProvider, confirmed } = await request.json();
+  const session = await getServerSession(authOptions);
+
+  if (!confirmed) {
+    return NextResponse.json({ error: 'Confirmation required' }, { status: 400 });
+  }
+
+  // Update LLM provider
+  await updateLLMProvider(session.organizationId, newProvider);
+
+  // Queue embedding migration job
+  const job = await embeddingMigrationQueue.add('migrate', {
+    organizationId: session.organizationId,
+    newProvider: getEmbeddingConfig(newProvider, true),
+  });
+
+  return NextResponse.json({
+    success: true,
+    migrationJobId: job.id,
+    message: 'LLM provider updated. Embedding migration started in background.',
+  });
+}
+```
+
+### Recommendation: Standardize When Possible
+
+For organizations that don't require strict data sovereignty:
+
+```typescript
+// Consider standardizing on OpenAI embeddings regardless of LLM provider
+// Benefits:
+// 1. No migration when switching LLM providers
+// 2. Lower cost (OpenAI embeddings are cheaper than Bedrock Titan)
+// 3. Better quality (OpenAI text-embedding-3-small has strong performance)
+//
+// Only use provider-specific embeddings when data sovereignty is required
+
+if (!org.settings.requiresDataSovereignty) {
+  // Always use OpenAI for embeddings, regardless of LLM provider
+  return { provider: 'openai', dimensions: 1536 };
+}
+```
+
+### Database Schema Consideration
+
+The `embedding` column dimension must accommodate the largest embedding model:
+
+```sql
+-- Current schema uses 1536 dimensions (OpenAI)
+-- If supporting Bedrock Titan (1024) or Vertex Gecko (768),
+-- the column can remain 1536 (larger than needed is OK)
+-- OR use separate columns per provider (not recommended)
+
+-- Recommended: Keep single column, pad smaller embeddings
+embedding vector(1536)
+```
+
+---
+
 ## References
 
 - [Anthropic API Documentation](https://docs.anthropic.com/)
 - [AWS Bedrock Developer Guide](https://docs.aws.amazon.com/bedrock/)
 - [Google Vertex AI Documentation](https://cloud.google.com/vertex-ai/docs)
+- [Context Assembly Architecture](./CONTEXT_ASSEMBLY.md) — How context is assembled for generation
+- [Secrets Management](../security/SECRETS_MANAGEMENT.md) — Credential storage for providers

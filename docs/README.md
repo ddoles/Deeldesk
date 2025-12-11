@@ -14,8 +14,18 @@ Welcome to the Deeldesk.ai documentation. This directory contains all project do
 ### Architecture Documents
 - **[Database Schema](./architecture/DATABASE_SCHEMA.sql)** - Complete database schema reference
 - **[LLM Provider Architecture](./architecture/LLM_PROVIDER_ARCHITECTURE.md)** - Multi-provider LLM design
+- **[Context Assembly](./architecture/CONTEXT_ASSEMBLY.md)** - Context assembly engine and token budgets
+- **[API Versioning](./architecture/API_VERSIONING.md)** - API versioning strategy
 - **[Proposal Versioning](./architecture/PROPOSAL_VERSIONING_MVP.md)** - Versioning and active proposal strategy
 - **[LLM Data Privacy Addendum](./architecture/PRD_ADDENDUM_LLM_Data_Privacy.md)** - Data sovereignty requirements
+
+### Operations Documents
+- **[Rate Limiting](./operations/RATE_LIMITING.md)** - API rate limiting strategy
+- **[Backup Strategy](./operations/BACKUP_STRATEGY.md)** - Backup and disaster recovery
+- **[Monitoring](./operations/MONITORING.md)** - Monitoring and alerting
+
+### Security Documents
+- **[Secrets Management](./security/SECRETS_MANAGEMENT.md)** - Secrets and credentials management
 
 ### Product Documents
 - **[Product Requirements Document](./product/Deeldesk_PRD_v4_0.docx)** - Complete PRD (Word)
@@ -41,6 +51,8 @@ Welcome to the Deeldesk.ai documentation. This directory contains all project do
 docs/
 ├── planning/          # Project planning and timelines
 ├── architecture/      # Technical architecture and design
+├── operations/        # Operational runbooks and strategies
+├── security/          # Security documentation
 ├── product/          # Product requirements and specs
 ├── design/           # Design system and UX documentation
 └── wireframes/       # Interactive HTML wireframes
@@ -58,8 +70,12 @@ docs/
 ### By Topic
 - **Database:** [Database Schema](./architecture/DATABASE_SCHEMA.sql)
 - **LLM Integration:** [LLM Provider Architecture](./architecture/LLM_PROVIDER_ARCHITECTURE.md)
+- **Context/Token Budgets:** [Context Assembly](./architecture/CONTEXT_ASSEMBLY.md)
+- **API Design:** [API Versioning](./architecture/API_VERSIONING.md)
 - **UI/UX:** [Design System](./design/DESIGN_SYSTEM.md) and [UX Guide](./design/UX_GUIDE.md)
 - **Branding:** [Branding in Knowledge Base](./design/BRANDING_KNOWLEDGE_BASE.md)
+- **Operations:** [Rate Limiting](./operations/RATE_LIMITING.md), [Backups](./operations/BACKUP_STRATEGY.md), [Monitoring](./operations/MONITORING.md)
+- **Security:** [Secrets Management](./security/SECRETS_MANAGEMENT.md)
 
 ---
 

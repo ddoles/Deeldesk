@@ -101,15 +101,32 @@ GET /api/stream/[job_id] → SSE connection for progress
 
 ### 3. Context Assembly Engine
 
-The Context Assembly Engine dynamically retrieves relevant context for each generation:
+The Context Assembly Engine dynamically retrieves relevant context for each generation. See [docs/architecture/CONTEXT_ASSEMBLY.md](./docs/architecture/CONTEXT_ASSEMBLY.md) for complete documentation.
 
+**Context Layers (bottom to top):**
 1. Business Model Summary (organization-level, always included when available)
-2. Session Context (prompt, template, preferences)
-3. Deal Context (opportunity-specific info)
-4. Business Context (products, competitors, playbooks)
-5. Historical Patterns (winning strategies - Phase 2)
+2. Brand Context (colors, voice, tone guidelines)
+3. Session Context (prompt, template, preferences)
+4. Deal Context (opportunity-specific info)
+5. Business Context (products, competitors, playbooks)
+6. Historical Patterns (winning strategies - Phase 2)
 
-Token budget allocation: Deal 40%, Products 30%, Competitive 20%, Playbooks 10%
+**Token Budget Allocation:**
+
+| Context Type | Budget | Truncation Priority | Notes |
+|--------------|--------|---------------------|-------|
+| Business Model | ~500 tokens | Never truncated | Foundational company context |
+| Brand Context | ~200 tokens | Never truncated | Voice, tone, guidelines |
+| Deal Context | 40% of remaining | 1 (last to truncate) | Opportunity-specific info |
+| Products | 30% of remaining | 2 | Relevant catalog entries |
+| Competitive | 20% of remaining | 3 | Battlecards for mentioned competitors |
+| Playbooks | 10% of remaining | 4 (first to truncate) | Sales playbooks, objection handling |
+
+**Overflow Strategy:**
+1. Business Model & Brand Context are never truncated (foundational)
+2. RAG-retrieved content is truncated by priority (Playbooks first, Deal Context last)
+3. User is warned when context is truncated with actionable guidance
+4. Truncation events are logged for monitoring
 
 The Business Model Summary is retrieved from `organizations.settings.business_model` and provides foundational context about the organization's business model, value proposition, and positioning that informs all proposal generations.
 
