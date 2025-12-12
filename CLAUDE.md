@@ -27,7 +27,18 @@
 | State | Zustand | Client-side state only |
 | LLM | Anthropic Claude 3.5 Sonnet | Via official SDK |
 | Embeddings | OpenAI text-embedding-3-small | 1536 dimensions |
-| File Export | pptxgenjs | For PowerPoint generation |
+| File Export | pptxgenjs | For PowerPoint generation (⚠️ rowSpan broken - avoid merged cells) |
+
+## Phase 0 Validated Constraints
+
+> **CRITICAL**: These constraints were validated through technical spikes. See [spikes/SPIKE_FINDINGS.md](./spikes/SPIKE_FINDINGS.md) for full details.
+
+| Constraint | Spike | Impact |
+|------------|-------|--------|
+| **LLM math is 60% accurate** | Spike 2 | ALL pricing calculations MUST be programmatic. LLM extracts line items; code calculates totals. Never let LLM do arithmetic. |
+| **pptxgenjs rowSpan broken** | Spike 1 | Use flat tables only. No merged cells. Use background colors for visual grouping. |
+| **Bedrock has full parity** | Spike 4 | AWS Bedrock performs identically to Anthropic Direct (3.4% overhead, 25% faster TTFT). |
+| **PLG cold start ~4 min** | Spike 3 | Zero-KB users get value in ~4 minutes. "Aha moment" is seeing complete 5-slide proposal. |
 
 ## Project Structure
 
@@ -156,16 +167,18 @@ const opportunities = await prisma.opportunity.findMany();
 
 ### 5. Pricing Engine (4-Scenario Matrix)
 
+> ⚠️ **CRITICAL (Spike 2 Finding):** LLM math accuracy is only 60% with drift up to $1,000. ALL pricing calculations MUST be done in code. The LLM's role is to extract line items and structure; the pricing engine (TypeScript) calculates all totals.
+
 The pricing engine handles four scenarios:
 
 | Scenario | Behavior |
 |----------|----------|
-| Fully codified | Auto-calculate exact quote |
-| Partially codified | Calculate known items, [CUSTOM] for unknowns |
+| Fully codified | Auto-calculate exact quote (programmatic) |
+| Partially codified | Calculate known items (programmatic), [CUSTOM] for unknowns |
 | Opaque/variable | Structure with [ENTER VALUE] placeholders |
 | User pastes quote | Preserve as-is, parse for signals |
 
-**Never hallucinate prices**. When uncertain, use placeholders.
+**Never hallucinate prices**. When uncertain, use placeholders. **Never let LLM perform arithmetic.**
 
 ## Coding Conventions
 
@@ -549,9 +562,16 @@ const opportunities = await prisma.opportunity.findMany({
 // ❌ NEVER: Hallucinate prices
 "The total investment is approximately $150,000..."
 
+// ❌ NEVER: Let LLM calculate (60% accuracy - Spike 2)
+prompt: "Calculate 50 users × $99/month × 12 months"
+// LLM may return $58,400 instead of $59,400
+
 // ✅ CORRECT: Use exact values or placeholders
 "The total investment is $151,200..." // If in context
 "The total investment is [ENTER VALUE]..." // If unknown
+
+// ✅ CORRECT: Programmatic calculation
+const total = quantity * unitPrice * term; // Always in code
 ```
 
 ## Environment Variables
@@ -612,3 +632,4 @@ npm run format           # Format with Prettier
 - [Sprint Plan](./docs/planning/SPRINT_PLAN.md) - Development timeline
 - [Database Schema](./docs/architecture/DATABASE_SCHEMA.sql) - Full schema with comments
 - [LLM Provider Architecture](./docs/architecture/LLM_PROVIDER_ARCHITECTURE.md) - Multi-provider design for data sovereignty
+- [Spike Findings](./spikes/SPIKE_FINDINGS.md) - Phase 0 technical validation results
