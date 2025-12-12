@@ -769,8 +769,13 @@ Users often have existing PowerPoint templates (.potx files) with corporate bran
 
 ### Sprint 4: Pricing Engine
 
-**Weeks 7-8**  
+**Weeks 7-8**
 **Theme:** Build intelligent pricing generation
+
+> ⚠️ **CRITICAL (from Spike 2):** ALL pricing calculations MUST be programmatic.
+> LLM math accuracy is only 60% with drift up to $1,000. The LLM extracts line items
+> and quantities; the pricing engine (code) calculates all totals. Never let the LLM
+> perform arithmetic on prices.
 
 #### Goals
 
@@ -794,7 +799,7 @@ Users often have existing PowerPoint templates (.potx files) with corporate bran
 | ID | Task | Points | Owner |
 |----|------|--------|-------|
 | T4-001 | Implement pricing tier configuration schema | 3 | Eng 1 |
-| T4-002 | Build pricing calculation engine | 8 | Eng 1 |
+| T4-002 | Build pricing calculation engine **(PROGRAMMATIC - no LLM math)** | 8 | Eng 1 |
 | T4-003 | Implement 4-scenario detection logic | 5 | Eng 1 |
 | T4-004 | Build pricing confirmation modal UI | 5 | Eng 2 |
 | T4-005 | Implement governance policy engine | 5 | Eng 1 |
@@ -816,6 +821,7 @@ Users often have existing PowerPoint templates (.potx files) with corporate bran
 |------|------------|
 | Math precision | Use decimal.js, never floats for currency |
 | Paste parsing | Support common formats (Excel, CSV, plain text) |
+| **LLM math errors** | **NEVER use LLM for calculations (Spike 2: 60% accuracy)** |
 
 ---
 

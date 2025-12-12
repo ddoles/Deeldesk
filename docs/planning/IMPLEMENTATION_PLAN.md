@@ -478,6 +478,11 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 
 **Theme:** Build intelligent pricing generation and brand context
 
+> ⚠️ **CRITICAL (from Spike 2):** ALL pricing calculations MUST be programmatic.
+> LLM math accuracy is only 60% with drift up to $1,000. The LLM extracts line items
+> and quantities; the pricing engine (code) calculates all totals. Never let the LLM
+> perform arithmetic on prices.
+
 ### Goals
 - Implement 4-scenario pricing matrix
 - Build pricing confirmation UX
@@ -501,7 +506,7 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | ID | Task | Points | Owner |
 |----|------|--------|-------|
 | T4-001 | Implement pricing tier configuration schema | 3 | Eng 1 |
-| T4-002 | Build pricing calculation engine | 8 | Eng 1 |
+| T4-002 | Build pricing calculation engine **(PROGRAMMATIC - no LLM math)** | 8 | Eng 1 |
 | T4-003 | Implement 4-scenario detection logic | 5 | Eng 1 |
 | T4-004 | Build pricing confirmation modal UI | 5 | Eng 2 |
 | T4-005 | Implement governance policy engine | 5 | Eng 1 |
