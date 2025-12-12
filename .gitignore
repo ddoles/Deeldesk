@@ -61,6 +61,7 @@ logs/
 tmp/
 temp/
 *.tmp
+~$*
 
 # Prisma
 prisma/migrations/

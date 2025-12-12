@@ -1,0 +1,162 @@
+{
+  "timestamp": "2025-12-12T17:21:38.623Z",
+  "anthropicDirect": [
+    {
+      "name": "Simple",
+      "provider": "Anthropic Direct",
+      "success": true,
+      "ttft": 1890,
+      "totalTime": 2166,
+      "outputTokens": 5,
+      "tokensPerSecond": "2.31",
+      "responsePreview": "4..."
+    },
+    {
+      "name": "Medium",
+      "provider": "Anthropic Direct",
+      "success": true,
+      "ttft": 1905,
+      "totalTime": 5812,
+      "outputTokens": 169,
+      "tokensPerSecond": "29.08",
+      "responsePreview": "**Executive Summary**\n\nWe propose implementing a comprehensive Customer Support Optimization Platfor..."
+    },
+    {
+      "name": "Complex",
+      "provider": "Anthropic Direct",
+      "success": true,
+      "ttft": 1729,
+      "totalTime": 12002,
+      "outputTokens": 417,
+      "tokensPerSecond": "34.74",
+      "responsePreview": "## Value Proposition: Transform Your Inventory Management with AI-Powered Precision\n\n**Eliminate $2M..."
+    }
+  ],
+  "awsBedrock": [
+    {
+      "name": "Simple",
+      "provider": "AWS Bedrock",
+      "success": true,
+      "ttft": 1761,
+      "totalTime": 1979,
+      "outputTokens": 1,
+      "tokensPerSecond": "0.51",
+      "responsePreview": "4..."
+    },
+    {
+      "name": "Medium",
+      "provider": "AWS Bedrock",
+      "success": true,
+      "ttft": 1794,
+      "totalTime": 7380,
+      "outputTokens": 121,
+      "tokensPerSecond": "16.40",
+      "responsePreview": "This proposal outlines a comprehensive software solution to modernize and streamline our customer su..."
+    },
+    {
+      "name": "Complex",
+      "provider": "AWS Bedrock",
+      "success": true,
+      "ttft": 569,
+      "totalTime": 11295,
+      "outputTokens": 228,
+      "tokensPerSecond": "20.19",
+      "responsePreview": "VALUE PROPOSITION\n\nAcme Corp stands to transform its inventory management challenges into a strategi..."
+    }
+  ],
+  "comparison": {
+    "avgAnthropicTTFT": 1841,
+    "avgBedrockTTFT": 1375,
+    "avgAnthropicTotal": 6660,
+    "avgBedrockTotal": 6885,
+    "ttftOverheadPercent": -25.3,
+    "totalOverheadPercent": 3.4,
+    "verdict": "PASS"
+  },
+  "streaming": {},
+  "errors": [],
+  "nonStreaming": {
+    "anthropic": [
+      {
+        "name": "Simple",
+        "provider": "Anthropic Direct (Non-Streaming)",
+        "success": true,
+        "totalTime": 3953,
+        "outputTokens": 5,
+        "responsePreview": "4..."
+      },
+      {
+        "name": "Medium",
+        "provider": "Anthropic Direct (Non-Streaming)",
+        "success": true,
+        "totalTime": 7831,
+        "outputTokens": 184,
+        "responsePreview": "**Executive Summary**\n\nOur organization proposes a comprehensive $150,000 software solution to trans..."
+      },
+      {
+        "name": "Complex",
+        "provider": "Anthropic Direct (Non-Streaming)",
+        "success": true,
+        "totalTime": 12180,
+        "outputTokens": 375,
+        "responsePreview": "## Value Proposition: Transform Your Inventory from Cost Center to Profit Driver\n\n**Immediate ROI Th..."
+      }
+    ],
+    "bedrock": [
+      {
+        "name": "Simple",
+        "provider": "AWS Bedrock (Non-Streaming)",
+        "success": true,
+        "totalTime": 1353,
+        "outputTokens": 5,
+        "responsePreview": "4..."
+      },
+      {
+        "name": "Medium",
+        "provider": "AWS Bedrock (Non-Streaming)",
+        "success": true,
+        "totalTime": 6055,
+        "outputTokens": 152,
+        "responsePreview": "Our proposed customer support optimization solution will streamline operations and reduce response t..."
+      },
+      {
+        "name": "Complex",
+        "provider": "AWS Bedrock (Non-Streaming)",
+        "success": true,
+        "totalTime": 8640,
+        "outputTokens": 284,
+        "responsePreview": "VALUE PROPOSITION\n\nIn today's competitive manufacturing landscape, manual inventory management isn't..."
+      }
+    ]
+  },
+  "featureParity": [
+    {
+      "test": "System Prompt",
+      "anthropic": "PASS",
+      "bedrock": "PASS",
+      "parity": true
+    },
+    {
+      "test": "Multi-Turn",
+      "anthropic": "PASS",
+      "bedrock": "PASS",
+      "parity": true
+    }
+  ],
+  "summary": {
+    "anthropicStreaming": {
+      "passed": 3,
+      "total": 3
+    },
+    "bedrockStreaming": {
+      "passed": 3,
+      "total": 3
+    },
+    "featureParity": {
+      "passed": 2,
+      "total": 2
+    },
+    "latencyOverhead": 3.4,
+    "verdict": "GO"
+  }
+}

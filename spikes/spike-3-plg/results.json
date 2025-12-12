@@ -1,0 +1,103 @@
+{
+  "timestamp": "2025-12-12T17:45:00.000Z",
+  "spike": "Spike 3: PLG User Journey Simulation",
+  "type": "design-analysis",
+  "scenarios": {
+    "coldStart": {
+      "name": "Scenario A: Cold Start",
+      "description": "New user with zero KB content",
+      "target": "<10 minutes",
+      "result": {
+        "timeExcludingGeneration": "3 minutes",
+        "timeIncludingGeneration": "4 minutes",
+        "clicks": 7,
+        "decisions": 3
+      },
+      "status": "PASS"
+    },
+    "minimalSetup": {
+      "name": "Scenario B: Minimal Setup",
+      "description": "User adds 1 product + 1 battlecard",
+      "target": "<10 minutes",
+      "result": {
+        "timeExcludingGeneration": "6 minutes",
+        "timeIncludingGeneration": "7 minutes",
+        "clicks": 15,
+        "decisions": 5
+      },
+      "status": "PASS"
+    },
+    "dealContext": {
+      "name": "Scenario C: Deal Context",
+      "description": "User pastes email thread as context",
+      "target": "<10 minutes",
+      "result": {
+        "timeExcludingGeneration": "5 minutes",
+        "timeIncludingGeneration": "6 minutes",
+        "clicks": 13,
+        "decisions": 4
+      },
+      "status": "PASS"
+    },
+    "returningUser": {
+      "name": "Scenario D: Returning User",
+      "description": "User returns next day with saved KB",
+      "target": "<5 minutes",
+      "result": {
+        "timeExcludingGeneration": "2 minutes",
+        "timeIncludingGeneration": "3 minutes",
+        "clicks": 5,
+        "decisions": 2
+      },
+      "status": "PASS"
+    }
+  },
+  "frictionPoints": [
+    {
+      "issue": "Many clicks to add KB content",
+      "severity": "medium",
+      "mitigation": "Bulk import option (Phase 2)"
+    },
+    {
+      "issue": "Unclear what to add first",
+      "severity": "medium",
+      "mitigation": "Onboarding wizard suggestion"
+    },
+    {
+      "issue": "No feedback on context parsing",
+      "severity": "medium",
+      "mitigation": "Show extracted entities"
+    },
+    {
+      "issue": "Placeholders may feel unfinished",
+      "severity": "medium",
+      "mitigation": "Make placeholders actionable"
+    }
+  ],
+  "ahamoment": {
+    "trigger": "User sees complete 5-slide proposal generated from single prompt",
+    "engagement": "Streaming text appearing in real-time",
+    "validation": "Professional formatting matches expectations",
+    "risk": "Placeholders too prominent may underwhelm"
+  },
+  "designDecisions": [
+    {
+      "decision": "Zero KB generates useful proposal with intelligent defaults",
+      "rationale": "Value delivery even without setup"
+    },
+    {
+      "decision": "Missing pricing shows [ENTER VALUE] not hallucinated numbers",
+      "rationale": "Validated in Spike 2 - LLM math unreliable"
+    },
+    {
+      "decision": "Minimum viable proposal is 5 slides",
+      "rationale": "Title, Summary, Solution, Investment, Next Steps"
+    }
+  ],
+  "summary": {
+    "allScenariosPass": true,
+    "averageTimeToFirstProposal": "5 minutes",
+    "averageClicks": 10,
+    "verdict": "GO"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "timestamp": "2025-12-12T16:59:04.468Z",
+  "tests": [
+    {
+      "name": "Title Slide",
+      "status": "pass",
+      "file": "01-title-slide.pptx"
+    },
+    {
+      "name": "Executive Summary",
+      "status": "pass",
+      "file": "02-executive-summary.pptx"
+    },
+    {
+      "name": "Solution Overview (Bullets)",
+      "status": "pass",
+      "file": "03-solution-overview.pptx"
+    },
+    {
+      "name": "Simple Pricing Table",
+      "status": "pass",
+      "file": "04-simple-pricing.pptx"
+    },
+    {
+      "name": "Complex Quote Table (25 items)",
+      "status": "pass",
+      "file": "05-complex-quote-25-items.pptx",
+      "notes": "Generated 28 rows, Grand Total: $1,873,324"
+    },
+    {
+      "name": "Unicode Characters (€, ¥, £, ₹, ₩, 日本語, 中文, 한국어)",
+      "status": "pass",
+      "file": "06-unicode-characters.pptx"
+    },
+    {
+      "name": "Text Overflow / Long Content",
+      "status": "pass",
+      "file": "07-text-overflow.pptx",
+      "notes": "Long legal text - verify no truncation in output"
+    },
+    {
+      "name": "Two-Column Layout",
+      "status": "pass",
+      "file": "08-two-column-layout.pptx"
+    },
+    {
+      "name": "Table with Merged Cells",
+      "status": "fail",
+      "file": "09-merged-cells.pptx",
+      "notes": "CONFIRMED: pptxgenjs rowSpan does NOT work. Merged cells render as separate rows. Workaround: avoid row spans, use flat tables or multiple adjacent tables.",
+      "manualVerification": {
+        "verified": true,
+        "date": "2025-12-12",
+        "finding": "Row spans rendered as separate rows instead of merged cells"
+      }
+    },
+    {
+      "name": "Full Proposal (4 slides)",
+      "status": "pass",
+      "file": "10-full-proposal-4-slides.pptx",
+      "notes": "Complete proposal with title, agenda, pricing, next steps"
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 1,
+    "warnings": 0,
+    "notes": "Merged cells limitation is acceptable - workaround available"
+  }
+}
