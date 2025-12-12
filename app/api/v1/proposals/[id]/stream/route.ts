@@ -73,8 +73,25 @@ export async function GET(
 
   const stream = new ReadableStream({
     async start(controller) {
+      let isClosed = false;
+
       const sendEvent = (data: object) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        if (isClosed) return;
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        } catch {
+          isClosed = true;
+        }
+      };
+
+      const closeController = () => {
+        if (isClosed) return;
+        isClosed = true;
+        try {
+          controller.close();
+        } catch {
+          // Already closed
+        }
       };
 
       let lastStage: string | null = null;
@@ -82,6 +99,8 @@ export async function GET(
       const maxPolls = 120; // 2 minutes at 1 poll/second
 
       const poll = async () => {
+        if (isClosed) return;
+
         try {
           // Check job status from BullMQ
           const jobStatus = await getProposalJobStatus(proposalId);
@@ -93,7 +112,7 @@ export async function GET(
 
               if (jobStatus.stage === 'complete') {
                 sendEvent({ type: 'complete', proposalId });
-                controller.close();
+                closeController();
                 return;
               }
 
@@ -102,7 +121,7 @@ export async function GET(
                   type: 'error',
                   message: jobStatus.message || 'Generation failed',
                 });
-                controller.close();
+                closeController();
                 return;
               }
 
@@ -122,7 +141,7 @@ export async function GET(
 
             if (currentProposal?.status === 'complete') {
               sendEvent({ type: 'complete', proposalId });
-              controller.close();
+              closeController();
               return;
             }
 
@@ -131,7 +150,7 @@ export async function GET(
                 type: 'error',
                 message: currentProposal.errorMessage || 'Generation failed',
               });
-              controller.close();
+              closeController();
               return;
             }
           }
@@ -139,18 +158,20 @@ export async function GET(
           pollCount++;
           if (pollCount >= maxPolls) {
             sendEvent({ type: 'error', message: 'Generation timeout' });
-            controller.close();
+            closeController();
             return;
           }
 
           // Continue polling
-          setTimeout(poll, 1000);
+          if (!isClosed) {
+            setTimeout(poll, 1000);
+          }
         } catch (error) {
           sendEvent({
             type: 'error',
             message: error instanceof Error ? error.message : 'Unknown error',
           });
-          controller.close();
+          closeController();
         }
       };
 

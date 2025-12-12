@@ -63,9 +63,15 @@ GUIDELINES:
 - Be concise and impactful
 - Use active voice
 - Focus on benefits, not features
-- For pricing: ONLY use specific numbers if explicitly provided. Otherwise use [ENTER VALUE] placeholder
-- Never hallucinate company names, prices, or specific claims
 - If information is missing, use reasonable placeholders like [COMPANY NAME] or [PROSPECT NAME]
+
+CRITICAL PRICING RULES (MUST FOLLOW):
+- NEVER perform math or calculations on prices
+- NEVER derive per-user, per-month, or unit prices from totals
+- ONLY use exact dollar amounts that appear verbatim in the user's request
+- For ANY calculated, derived, or uncertain price: use [ENTER VALUE] placeholder
+- Example: If user says "$50,000 annually for 50 users", you may say "$50,000 annually" but NEVER "$1,000 per user"
+- When in doubt, use [ENTER VALUE] - it's better to ask than to guess wrong
 
 IMPORTANT: Your entire response must be valid JSON. Do not include any text before or after the JSON array.`;
 
