@@ -1,9 +1,9 @@
 # Deeldesk.ai Sprint Plan
 ## Phase 0 De-Risking & MVP Development
 
-**Document Version:** 1.0  
-**Last Updated:** December 2025  
-**Status:** DRAFT  
+**Document Version:** 1.1
+**Last Updated:** December 2025
+**Status:** Ready for Execution
 **Note:** This document contains detailed spike documentation and alternative approaches. For the primary execution plan, see `IMPLEMENTATION_PLAN.md`.  
 
 ---
@@ -28,9 +28,76 @@ A key addition in this version is **Spike 4: LLM Data Privacy Architecture**, wh
 
 ## Phase 0: Technical De-Risking
 
-**Duration:** 1.5 Weeks (8 working days)  
-**Objective:** Validate highest-risk technical assumptions before committing to full MVP build  
+**Duration:** 1.5 Weeks (8 working days)
+**Objective:** Validate highest-risk technical assumptions before committing to full MVP build
 **Go/No-Go Decision:** End of Day 8
+
+### Pre-Phase 0: Day 0 Scaffolding (REQUIRED)
+
+> **CRITICAL**: Complete these items BEFORE Day 1 of Phase 0. Spikes cannot run without infrastructure.
+
+#### Prerequisite Tasks
+
+- [ ] **Request AWS Bedrock Access** — Claude 3.5 Sonnet model access typically takes 24-48 hours
+- [ ] **Verify docker-compose** — Run `docker-compose up -d` and confirm all services start
+- [ ] **Bootstrap Next.js Project** — Initialize project structure for spike code
+
+#### Task D0-001: Project Bootstrap (4 hours)
+
+**Owner:** Engineer 1
+
+```bash
+# Initialize Next.js 14 with TypeScript
+npx create-next-app@14 . --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
+
+# Install core dependencies
+npm install prisma @prisma/client ioredis bullmq @anthropic-ai/sdk openai zod
+
+# Install dev dependencies
+npm install -D vitest @testing-library/react playwright
+```
+
+- [ ] Initialize Next.js 14 project with TypeScript and App Router
+- [ ] Configure ESLint and Prettier with project conventions
+- [ ] Set up path aliases (`@/` for src)
+- [ ] Configure Tailwind CSS with design tokens from `DESIGN_SYSTEM.md`
+- [ ] Initialize Prisma and generate schema from `DATABASE_SCHEMA.sql`
+- [ ] Create `.env.local` from `env.example`
+- [ ] Verify `npm run dev` starts successfully
+- [ ] Verify `docker-compose up -d` connects (Postgres, Redis, MinIO)
+
+#### Task D0-002: Spike Harness Setup (2 hours)
+
+**Owner:** Engineer 2
+
+- [ ] Create `spikes/` directory for spike code
+- [ ] Set up Vitest configuration for spike tests
+- [ ] Create spike output directory structure:
+  ```
+  spikes/
+  ├── spike-1-rendering/
+  │   ├── inputs/          # JSON test inputs
+  │   ├── outputs/         # Generated .pptx files
+  │   └── screenshots/     # Rendered screenshots
+  ├── spike-2-context/
+  │   ├── test-data/       # Test battlecards, emails
+  │   └── results/         # Accuracy logs
+  ├── spike-3-plg/
+  │   └── journey-logs/    # Timing measurements
+  └── spike-4-llm/
+      ├── benchmarks/      # Performance results
+      └── cost-analysis/   # Cost comparisons
+  ```
+
+#### Architecture Decisions to Lock (Day 0)
+
+Before spikes begin, confirm these decisions:
+
+| Decision | Options | Recommendation | Status |
+|----------|---------|----------------|--------|
+| **RLS Strategy** | (A) DB-enforced RLS, (B) Application-layer scoping | **B for MVP** — Prisma + connection pooling makes DB-level RLS complex. Enforce at application layer, add DB RLS in Phase 2. | DECIDE |
+| **Rate Limiting** | (A) Edge + Upstash, (B) API routes + ioredis | **B for MVP** — Simpler, uses existing Redis. Add Edge in Sprint 8 if needed. | DECIDE |
+| **Embedding Provider** | (A) Always OpenAI, (B) Match LLM provider | **A unless data sovereignty required** — Avoids migration complexity. | DECIDE |
 
 ### Sprint 0: De-Risking Spikes
 
@@ -48,25 +115,38 @@ A key addition in this version is **Spike 4: LLM Data Privacy Architecture**, wh
 
 ### Spike 1: Rendering Engine ("Slide Breaker")
 
-**Owner:** Engineer 1  
+**Owner:** Engineer 1
 **Duration:** 2 days
+
+#### Artifact Requirements
+
+> **CRITICAL**: All test runs must produce reproducible artifacts for decision-making.
+
+For each test case, save:
+1. **Input JSON** — The slide content structure passed to pptxgenjs
+2. **Output .pptx** — The generated PowerPoint file
+3. **Screenshot** — Rendered output (open in LibreOffice/PowerPoint, screenshot)
+4. **Pass/Fail log** — JSON with test name, result, error message if any
 
 #### Tasks
 
 - [ ] **Task 1.1: Environment Setup** (2 hours)
-  - Set up pptxgenjs test harness
-  - Create test output directory structure
+  - Set up pptxgenjs test harness (lock version in package.json)
+  - Create test output directory structure (`spikes/spike-1-rendering/`)
   - Configure logging for detailed error capture
+  - Create screenshot automation script (LibreOffice headless or manual process)
 
 - [ ] **Task 1.2: Layout Stress Test** (4 hours)
   - Create comparison table with 5+ columns, complex row content
   - Test text overflow scenarios (200+ character cells)
+  - **NEW: Test line-breaking and word-wrap behavior** (long words, URLs)
   - Test footer overlap with dense content
   - Unicode handling: "ROI: 50% ↑", "€1,500", "¥10,000", "日本語テスト"
 
 - [ ] **Task 1.3: Complex Quote Stress Test** (4 hours)
   - Generate 25-line-item quote table
   - Test grouped headers (Product Category → SKUs)
+  - **NEW: Test table cell merge scenarios** (common in pricing tables)
   - Test $0.00 line items (free add-ons)
   - Test wide text: "Implementation of Phase 2 Data Migration Services"
   - Test decimal precision: $1,234,567.89
@@ -95,8 +175,53 @@ A key addition in this version is **Spike 4: LLM Data Privacy Architecture**, wh
 
 ### Spike 2: Context Window Reasoning
 
-**Owner:** Engineer 2  
+**Owner:** Engineer 2
 **Duration:** 2 days
+
+#### Methodology: Structured Extraction First
+
+> **RECOMMENDATION**: The most reliable way to achieve "0% math drift" is structured extraction before prose generation.
+
+**Two-Phase Approach (Test This):**
+1. **Phase 1**: Extract exact values to JSON (numbers, currencies, competitors, dates)
+2. **Phase 2**: Generate prose using the extracted JSON as source of truth
+
+```typescript
+// Phase 1: Structured extraction
+const extracted = await claude.extract({
+  prompt: "Extract the following from the context...",
+  schema: {
+    budget: { amount: number, currency: string },
+    quoteTotal: { amount: number, currency: string },
+    competitors: string[],
+    keyDates: string[],
+  }
+});
+
+// Phase 2: Generate prose from structured data
+const prose = await claude.generate({
+  prompt: "Using ONLY the following verified data, write...",
+  data: extracted,
+});
+```
+
+#### Approximation Detection
+
+Create automated test for detecting approximations:
+
+```typescript
+const APPROXIMATION_PATTERNS = [
+  /~\$[\d,]+/,           // ~$150,000
+  /about \$[\d,]+/i,     // about $150,000
+  /approximately \$[\d,]+/i,
+  /around \$[\d,]+/i,
+  /roughly \$[\d,]+/i,
+];
+
+function containsApproximation(text: string): boolean {
+  return APPROXIMATION_PATTERNS.some(p => p.test(text));
+}
+```
 
 #### Tasks
 
@@ -117,6 +242,7 @@ A key addition in this version is **Spike 4: LLM Data Privacy Architecture**, wh
   - Prompt: "Write an executive summary highlighting the investment"
   - Success: States "$151,200" exactly
   - Failure: Approximates ("~$150k", "about $150,000")
+  - **NEW: Use automated approximation detection in test**
   - Run 10 iterations, measure drift rate
 
 - [ ] **Task 2.4: Currency Consistency Test** (3 hours)
@@ -124,8 +250,15 @@ A key addition in this version is **Spike 4: LLM Data Privacy Architecture**, wh
   - Prompt: "Generate pricing summary"
   - Expected: AI flags currency mismatch OR asks for conversion rate
   - Failure: Hallucinates conversion (e.g., assumes £1 = $1.25)
+  - **NEW: Test multi-currency scenario (USD quote, EUR customer budget)**
 
-- [ ] **Task 2.5: Fallback Evaluation** (4 hours)
+- [ ] **Task 2.5: Structured Extraction Baseline** (3 hours) — NEW
+  - Implement two-phase approach (extract → generate)
+  - Compare accuracy vs single-pass generation
+  - Measure latency overhead
+  - Document when to use structured extraction
+
+- [ ] **Task 2.6: Fallback Evaluation** (4 hours)
   - If accuracy <95%, test Map-Reduce approach (two-pass extraction)
   - If Map-Reduce insufficient, test Tool Use (structured get_quote_total function)
   - Measure latency impact of fallbacks
@@ -149,15 +282,27 @@ A key addition in this version is **Spike 4: LLM Data Privacy Architecture**, wh
 
 ### Spike 3: PLG User Journey Simulation
 
-**Owner:** Engineer 1 + Designer  
+**Owner:** Engineer 1 + Designer
 **Duration:** 1 day
+
+#### Key Question: What Happens with Zero Context?
+
+> **CRITICAL**: Define product behavior when user has no KB, no brand settings, no deal context.
+
+**Decisions Needed:**
+- What template is used by default? (System "SaaS Standard"?)
+- What brand colors/fonts are applied? (Deeldesk defaults? Neutral?)
+- What happens when no products exist? (Generic value props? Placeholders?)
+- What voice/tone is used? (Professional default?)
 
 #### Tasks
 
-- [ ] **Task 3.1: Scenario A - Cold Start** (2 hours)
-  - Simulate new user with zero prior content
+- [ ] **Task 3.1: Scenario A - Cold Start (Blank Org)** (2 hours)
+  - Simulate new user with **truly zero content** (no KB, no brand, no context)
+  - Document what defaults the product uses
   - Measure time from "signup" to first generated proposal
   - Identify friction points in onboarding
+  - **NEW: Decide what the "blank org" proposal looks like**
   - Target: <10 minutes
 
 - [ ] **Task 3.2: Scenario B - Minimal Setup** (2 hours)
@@ -172,10 +317,17 @@ A key addition in this version is **Spike 4: LLM Data Privacy Architecture**, wh
   - Validate deal-specific details appear in proposal
   - Target: <10 minutes total
 
-- [ ] **Task 3.4: "Aha Moment" Analysis** (2 hours)
+- [ ] **Task 3.4: Scenario D - Returning User (Day 2)** (2 hours) — NEW
+  - User returns next day with saved KB content
+  - Measure time to create second proposal
+  - Verify draft persistence works
+  - Target: <5 minutes
+
+- [ ] **Task 3.5: "Aha Moment" Analysis** (2 hours)
   - Document where users would experience value
   - Identify potential drop-off points
   - Recommend onboarding optimizations
+  - **NEW: Count decisions/screens before first proposal**
 
 #### Acceptance Criteria
 
@@ -263,6 +415,13 @@ Enterprise sales professionals often work at companies with strict data policies
   - Compare embedding quality (similarity search accuracy)
   - Measure latency differences
   - Recommend default embedding provider per LLM provider
+
+- [ ] **Task 4.8: Embedding Dimension Compatibility** (2 hours) — NEW
+  - **CRITICAL**: Schema uses `vector(1536)` but Titan uses 1024 dimensions
+  - Test padding strategy: Titan 1024 → zero-pad to 1536
+  - Verify padded vectors work correctly in pgvector similarity search
+  - Document: "When Bedrock is enabled, does this imply no OpenAI embeddings?"
+  - Decision: Enforce embedding provider matches LLM provider for data sovereignty?
 
 #### Acceptance Criteria
 

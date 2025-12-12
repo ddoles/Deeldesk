@@ -14,29 +14,111 @@ This plan implements an AI-generated business model summary for the user's own o
 
 ## Architecture Decision
 
-### Storage: `organizations.settings` JSONB
+### Storage: Dedicated `company_profiles` Table
+
+**Updated Decision:** Use a dedicated table instead of JSONB for better queryability, version history, and structured data.
 
 **Rationale:**
-- Single organizational knowledge item (not a collection)
-- Always included in context assembly (not RAG-retrieved)
-- Similar to brand settings — organizational configuration
-- No schema migration needed
-- Always available for every proposal
+- **Better queryability** — Can query by industry, company size, verification status
+- **Type-safe enums** — Generated_by, confidence level as database enums
+- **Version history support** — Built-in version tracking field
+- **Structured fields** — Separate columns for overview, value proposition, etc.
+- **Audit trail** — Clear tracking of who generated/edited and when
+- **Cleaner API** — Direct field access vs. JSON extraction
 
-**Structure:**
-```typescript
-interface OrganizationSettings {
-  // ... existing fields ...
-  business_model?: {
-    summary: string;  // Main business model description
-    generated_at: string;  // ISO timestamp
-    generated_by: 'ai' | 'user';
-    last_edited_at?: string;  // ISO timestamp
-    last_edited_by?: string;  // user_id
-    is_verified: boolean;  // User has reviewed/verified
-    sources?: string[];  // URLs used for generation (optional)
-    confidence?: 'high' | 'medium' | 'low';  // Generation confidence
-  };
+**Database Schema:**
+```sql
+CREATE TABLE company_profiles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID UNIQUE NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+
+  -- Business Model Summary
+  summary TEXT,                       -- Main business model description
+
+  -- Company Details (structured for better querying)
+  company_overview TEXT,
+  value_proposition TEXT,
+  target_customers TEXT,
+  revenue_model TEXT,
+  key_differentiators TEXT[] DEFAULT '{}',
+
+  -- Industry & Market
+  industry VARCHAR(100),
+  market_segment VARCHAR(100),
+  company_size VARCHAR(50),           -- e.g., "startup", "smb", "enterprise"
+  founded_year INTEGER,
+  headquarters VARCHAR(255),
+  website TEXT,
+
+  -- Generation Metadata
+  generated_at TIMESTAMP WITH TIME ZONE,
+  generated_by generated_by,          -- ENUM: 'ai', 'user'
+  confidence confidence_level,        -- ENUM: 'high', 'medium', 'low'
+  sources TEXT[] DEFAULT '{}',        -- URLs used for generation
+
+  -- Verification
+  is_verified BOOLEAN NOT NULL DEFAULT false,
+  verified_at TIMESTAMP WITH TIME ZONE,
+
+  -- Edit tracking
+  last_edited_at TIMESTAMP WITH TIME ZONE,
+  last_edited_by UUID REFERENCES users(id),
+
+  -- Version tracking (for history)
+  version INTEGER NOT NULL DEFAULT 1,
+
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+```
+
+**Prisma Model:**
+```prisma
+model CompanyProfile {
+  id             String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String          @unique @map("organization_id") @db.Uuid
+
+  // Business Model Summary
+  summary        String?
+
+  // Company Details
+  companyOverview    String?     @map("company_overview")
+  valueProposition   String?     @map("value_proposition")
+  targetCustomers    String?     @map("target_customers")
+  revenueModel       String?     @map("revenue_model")
+  keyDifferentiators String[]    @default([]) @map("key_differentiators")
+
+  // Industry & Market
+  industry       String?         @db.VarChar(100)
+  marketSegment  String?         @map("market_segment") @db.VarChar(100)
+  companySize    String?         @map("company_size") @db.VarChar(50)
+  foundedYear    Int?            @map("founded_year")
+  headquarters   String?         @db.VarChar(255)
+  website        String?
+
+  // Generation Metadata
+  generatedAt    DateTime?       @map("generated_at") @db.Timestamptz
+  generatedBy    GeneratedBy?    @map("generated_by")
+  confidence     ConfidenceLevel?
+  sources        String[]        @default([])
+
+  // Verification
+  isVerified     Boolean         @default(false) @map("is_verified")
+  verifiedAt     DateTime?       @map("verified_at") @db.Timestamptz
+
+  // Edit tracking
+  lastEditedAt   DateTime?       @map("last_edited_at") @db.Timestamptz
+  lastEditedById String?         @map("last_edited_by") @db.Uuid
+
+  // Version tracking
+  version        Int             @default(1)
+
+  // Relations
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lastEditedBy   User?           @relation("LastEditedBy", fields: [lastEditedById], references: [id])
+
+  @@map("company_profiles")
 }
 ```
 
@@ -47,14 +129,15 @@ interface OrganizationSettings {
 ### Phase 1: Backend Foundation (8 points)
 
 #### Task 1.1: Database Schema Updates
-**File:** `prisma/schema.prisma`  
+**File:** `prisma/schema.prisma`
 **Points:** 1
 
-- No schema changes needed (uses existing `organizations.settings` JSONB)
-- Update TypeScript types in `types/organization.ts` to include `business_model` field
+- ✅ Schema already created with dedicated `company_profiles` table
+- Enums already defined: `generated_by`, `confidence_level`
+- Update TypeScript types in `types/company-profile.ts`
 
 **Files to modify:**
-- `types/organization.ts` - Add `BusinessModelSummary` interface
+- `types/company-profile.ts` - Add `CompanyProfile` interface (generated by Prisma)
 
 ---
 
@@ -130,11 +213,11 @@ export async function generateBusinessModelSummary(
 ### Phase 2: Context Assembly Integration (3 points)
 
 #### Task 2.1: Update Context Assembly Engine
-**File:** `lib/ai/context.ts`  
+**File:** `lib/ai/context.ts`
 **Points:** 3
 
 **Changes:**
-- Retrieve business model summary from organization settings
+- Retrieve company profile from dedicated `company_profiles` table
 - Include in `AssembledContext` when present
 - Add to system prompt for proposal generation
 
@@ -145,14 +228,25 @@ export async function assembleContext(
   opportunityId: string,
   organizationId: string
 ): Promise<AssembledContext> {
-  const org = await getOrganization(organizationId);
-  
-  // Include business model if it exists
-  const businessModel = org.settings.business_model?.summary;
-  
+  // Retrieve company profile from dedicated table
+  const companyProfile = await prisma.companyProfile.findUnique({
+    where: { organizationId }
+  });
+
+  // Build business model context from structured fields
+  const businessModelContext = companyProfile ? {
+    summary: companyProfile.summary,
+    companyOverview: companyProfile.companyOverview,
+    valueProposition: companyProfile.valueProposition,
+    targetCustomers: companyProfile.targetCustomers,
+    keyDifferentiators: companyProfile.keyDifferentiators,
+    industry: companyProfile.industry,
+    isVerified: companyProfile.isVerified,
+  } : null;
+
   return {
     // ... existing context
-    businessModel,  // Always included when present
+    companyProfile: businessModelContext,  // Always included when present
     products: await getRelevantProducts(opportunityId),
     battlecards: await getRelevantBattlecards(opportunityId),
     playbooks: await getRelevantPlaybooks(opportunityId),
@@ -162,8 +256,8 @@ export async function assembleContext(
 ```
 
 **Files to modify:**
-- `lib/ai/context.ts` - Add business model retrieval
-- `lib/ai/prompts/system-prompt.ts` - Include business model in prompt template
+- `lib/ai/context.ts` - Add company profile retrieval
+- `lib/ai/prompts/system-prompt.ts` - Include company profile in prompt template
 
 ---
 
@@ -367,85 +461,114 @@ docs/
 
 ## API Specification
 
-### GET /api/knowledge/business-model
+### GET /api/knowledge/company-profile
 
-Returns current business model summary for the authenticated user's organization.
+Returns current company profile for the authenticated user's organization.
 
 **Response:**
 ```json
 {
+  "id": "uuid",
   "summary": "Acme Corp is a B2B SaaS platform...",
-  "generated_at": "2025-01-15T10:30:00Z",
-  "generated_by": "ai",
-  "last_edited_at": "2025-01-16T14:20:00Z",
-  "last_edited_by": "user_123",
-  "is_verified": true,
+  "companyOverview": "Founded in 2015, Acme Corp provides...",
+  "valueProposition": "We help enterprises reduce operational costs by 40%...",
+  "targetCustomers": "Mid-market and enterprise companies in financial services...",
+  "revenueModel": "SaaS subscription with usage-based pricing...",
+  "keyDifferentiators": ["AI-powered automation", "Enterprise-grade security", "24/7 support"],
+  "industry": "Enterprise Software",
+  "marketSegment": "B2B SaaS",
+  "companySize": "startup",
+  "foundedYear": 2015,
+  "headquarters": "San Francisco, CA",
+  "website": "https://acme.com",
+  "generatedAt": "2025-01-15T10:30:00Z",
+  "generatedBy": "ai",
+  "confidence": "high",
   "sources": ["https://acme.com", "https://linkedin.com/company/acme"],
-  "confidence": "high"
+  "isVerified": true,
+  "verifiedAt": "2025-01-16T09:00:00Z",
+  "lastEditedAt": "2025-01-16T14:20:00Z",
+  "lastEditedBy": "user_123",
+  "version": 2
 }
 ```
 
 **Status Codes:**
 - `200` - Success
-- `404` - No business model summary exists yet
+- `404` - No company profile exists yet
 
 ---
 
-### POST /api/knowledge/business-model/generate
+### POST /api/knowledge/company-profile/generate
 
-Triggers AI generation of business model summary.
+Triggers AI generation of company profile.
 
 **Request Body:**
 ```json
 {
-  "organization_name": "Acme Corp",  // Optional, defaults to org name
-  "organization_domain": "acme.com"  // Optional, for better search
+  "organizationName": "Acme Corp",  // Optional, defaults to org name
+  "organizationDomain": "acme.com"  // Optional, for better search
 }
 ```
 
 **Response:**
 ```json
 {
+  "id": "uuid",
   "summary": "Acme Corp is a B2B SaaS platform...",
-  "generated_at": "2025-01-15T10:30:00Z",
-  "generated_by": "ai",
-  "is_verified": false,
+  "companyOverview": "Founded in 2015...",
+  "valueProposition": "We help enterprises...",
+  "targetCustomers": "Mid-market and enterprise...",
+  "keyDifferentiators": ["AI-powered automation", "Enterprise-grade security"],
+  "industry": "Enterprise Software",
+  "generatedAt": "2025-01-15T10:30:00Z",
+  "generatedBy": "ai",
+  "isVerified": false,
   "sources": ["https://acme.com", "https://linkedin.com/company/acme"],
-  "confidence": "high"
+  "confidence": "high",
+  "version": 1
 }
 ```
 
 **Status Codes:**
-- `200` - Generation successful
+- `200` - Generation successful (creates or updates)
 - `400` - Invalid request
 - `429` - Rate limit exceeded (too many generations)
 - `500` - Generation failed
 
 ---
 
-### PUT /api/knowledge/business-model
+### PUT /api/knowledge/company-profile
 
-Updates the business model summary (user edits).
+Updates the company profile (user edits).
 
 **Request Body:**
 ```json
 {
   "summary": "Updated business model description...",
-  "is_verified": true  // Optional
+  "companyOverview": "Updated overview...",
+  "valueProposition": "Updated value prop...",
+  "targetCustomers": "Updated target customers...",
+  "keyDifferentiators": ["Differentiator 1", "Differentiator 2"],
+  "industry": "Technology",
+  "isVerified": true
 }
 ```
 
 **Response:**
 ```json
 {
+  "id": "uuid",
   "summary": "Updated business model description...",
-  "generated_at": "2025-01-15T10:30:00Z",
-  "generated_by": "ai",
-  "last_edited_at": "2025-01-16T14:20:00Z",
-  "last_edited_by": "user_123",
-  "is_verified": true,
-  "sources": ["https://acme.com", "https://linkedin.com/company/acme"],
-  "confidence": "high"
+  "companyOverview": "Updated overview...",
+  "valueProposition": "Updated value prop...",
+  "generatedAt": "2025-01-15T10:30:00Z",
+  "generatedBy": "ai",
+  "lastEditedAt": "2025-01-16T14:20:00Z",
+  "lastEditedBy": "user_123",
+  "isVerified": true,
+  "verifiedAt": "2025-01-16T14:20:00Z",
+  "version": 2
 }
 ```
 
@@ -453,6 +576,7 @@ Updates the business model summary (user edits).
 - `200` - Update successful
 - `400` - Invalid request
 - `401` - Unauthorized
+- `404` - No company profile exists (use POST to create)
 
 ---
 
@@ -461,9 +585,20 @@ Updates the business model summary (user edits).
 ### Updated Context Structure
 
 ```typescript
+interface CompanyProfileContext {
+  summary: string | null;
+  companyOverview: string | null;
+  valueProposition: string | null;
+  targetCustomers: string | null;
+  keyDifferentiators: string[];
+  industry: string | null;
+  isVerified: boolean;
+}
+
 interface AssembledContext {
   // ... existing fields
-  businessModel?: string;  // Organization's business model summary
+  companyProfile: CompanyProfileContext | null;  // Organization's company profile
+  brandSettings: BrandContext | null;            // Organization's brand settings
   products: Product[];
   battlecards: Battlecard[];
   playbooks: Playbook[];
@@ -473,18 +608,23 @@ interface AssembledContext {
 
 ### System Prompt Integration
 
-The business model summary is included in the system prompt as foundational context:
+The company profile is included in the system prompt as foundational context:
 
 ```
 You are generating a proposal for [Customer Company].
 
 ORGANIZATION CONTEXT:
-[Business Model Summary if available]
+Company Overview: ${companyProfile.companyOverview}
+Value Proposition: ${companyProfile.valueProposition}
+Target Customers: ${companyProfile.targetCustomers}
+Key Differentiators: ${companyProfile.keyDifferentiators.join(', ')}
+Industry: ${companyProfile.industry}
 
 Use this context to ensure:
 - Value propositions align with our company positioning
 - Messaging reflects our key differentiators
 - Tone and style match our business model
+- ${companyProfile.isVerified ? '' : '[Note: Company profile not yet verified by user]'}
 ```
 
 ---

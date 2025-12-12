@@ -254,7 +254,7 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | S1-004 | Create new Opportunity with name/description | 5 | Eng 2 |
 | S1-005 | View list of Opportunities | 3 | Eng 2 |
 
-### Technical Tasks (31 points)
+### Technical Tasks (35 points)
 
 | ID | Task | Points | Owner |
 |----|------|--------|-------|
@@ -264,10 +264,12 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | T1-004 | Implement Opportunity entity schema | 3 | Eng 2 |
 | T1-005 | Implement User entity with org membership | 3 | Eng 1 |
 | T1-006 | Set up authentication (NextAuth.js) | 5 | Eng 1 |
-| T1-007 | Create UI component library foundation | 5 | Eng 2 |
+| T1-007 | Create UI component library foundation (shadcn/ui + design tokens) | 5 | Eng 2 |
 | T1-008 | Set up CI/CD with GitHub Actions | 3 | Eng 1 |
 | T1-009 | Configure staging environment | 2 | Eng 1 |
 | T1-010 | Add closed_at handling to Opportunity model | 1 | Eng 1 |
+| T1-011 | **Set up Vitest for unit tests** | 2 | Eng 2 |
+| T1-012 | **Configure test database and fixtures** | 2 | Eng 1 |
 
 ### Acceptance Criteria
 - [ ] User can complete signup flow and land on dashboard
@@ -299,7 +301,9 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | S2-004 | See proposal listed under parent Opportunity | 3 | Eng 2 |
 | S2-005 | Configure LLM provider for organization | 3 | Eng 1 |
 
-### Technical Tasks (45 points)
+### Technical Tasks (37 points)
+
+> **NOTE**: BedrockProvider moved to Sprint 3 to balance sprint capacity (~40 points target).
 
 | ID | Task | Points | Owner |
 |----|------|--------|-------|
@@ -307,13 +311,13 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | T2-002 | Set up BullMQ + Redis for async jobs | 5 | Eng 1 |
 | T2-003 | Implement LLMProvider interface and factory | 5 | Eng 1 |
 | T2-004 | Implement AnthropicDirectProvider | 5 | Eng 1 |
-| T2-005 | Implement BedrockProvider with streaming | 8 | Eng 1 |
+| T2-005 | ~~Implement BedrockProvider with streaming~~ | ~~8~~ | **MOVED TO SPRINT 3** |
 | T2-006 | Implement basic Context Assembly Engine | 8 | Eng 1 |
 | T2-007 | Build SSE streaming endpoint | 5 | Eng 2 |
 | T2-008 | Implement slide content generation prompts | 8 | Eng 1 |
 | T2-009 | Build proposal viewer component | 5 | Eng 2 |
 | T2-010 | Implement generation progress UI | 3 | Eng 2 |
-| T2-011 | Add LLM provider selection to org settings | 3 | Eng 2 |
+| T2-011 | ~~Add LLM provider selection to org settings~~ | ~~3~~ | **MOVED TO SPRINT 3** |
 | T2-012 | Implement active proposal query logic (most recent) | 2 | Eng 1 |
 | T2-013 | Add version increment on new proposal creation | 1 | Eng 1 |
 
@@ -323,8 +327,7 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 - [ ] Generated proposal displays in viewer
 - [ ] Proposal linked to parent Opportunity
 - [ ] Generation completes in <60 seconds
-- [ ] **Proposals generate correctly via both Anthropic API and AWS Bedrock**
-- [ ] **Organization can be configured to use Bedrock provider**
+- [ ] **Proposals generate correctly via Anthropic API** (Bedrock in Sprint 3)
 - [ ] **Most recent proposal is treated as active automatically**
 - [ ] **New proposals increment version number correctly**
 
@@ -354,6 +357,8 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 
 ### Technical Tasks (60 points)
 
+> **NOTE**: Includes BedrockProvider tasks moved from Sprint 2. Brand features moved to Sprint 4.
+
 | ID | Task | Points | Owner |
 |----|------|--------|-------|
 | T3-001 | Implement Deal Context entity schema | 3 | Eng 1 |
@@ -365,13 +370,15 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | T3-007 | Build knowledge base management UI | 5 | Eng 2 |
 | T3-008 | Enhance Context Assembly with KB retrieval | 5 | Eng 1 |
 | T3-009 | Build conversational KB query interface | 5 | Eng 2 |
-| T3-010 | Add brand preview panel to product editor | 3 | Eng 2 |
-| T3-011 | Integrate brand context into Context Assembly Engine | 5 | Eng 1 |
-| T3-012 | Add brand guidelines page to KB section | 3 | Eng 2 |
+| T3-010 | ~~Add brand preview panel to product editor~~ | ~~3~~ | **MOVED TO SPRINT 4** |
+| T3-011 | ~~Integrate brand context into Context Assembly Engine~~ | ~~5~~ | **MOVED TO SPRINT 4** |
+| T3-012 | ~~Add brand guidelines page to KB section~~ | ~~3~~ | **MOVED TO SPRINT 4** |
 | T3-013 | Implement business model generator service (LLM + web search) | 5 | Eng 1 |
 | T3-014 | Build business model API endpoints (GET, POST generate, PUT) | 2 | Eng 1 |
 | T3-015 | Create company profile page in Knowledge Base | 4 | Eng 2 |
 | T3-016 | Integrate business model into context assembly | 3 | Eng 1 |
+| T3-017 | **Implement BedrockProvider with streaming** (from Sprint 2) | 8 | Eng 1 |
+| T3-018 | **Add LLM provider selection to org settings** (from Sprint 2) | 3 | Eng 2 |
 
 ### Acceptance Criteria
 - [ ] User can paste deal context and see it reflected in proposal
@@ -379,27 +386,27 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 - [ ] KB content automatically retrieved for relevant proposals
 - [ ] User can query KB with natural language and get cited answers
 - [ ] Vector search returns relevant results in <2 seconds
-- [ ] Brand preview visible when creating/editing KB content
-- [ ] KB content in proposals uses brand colors and voice automatically
-- [ ] Brand guidelines accessible from KB navigation
 - [ ] User can generate business model summary via AI (on-demand)
 - [ ] User can edit and save business model summary
 - [ ] Business model summary included in all proposal generations when available
 - [ ] Company profile accessible from Knowledge Base navigation
+- [ ] **Proposals generate correctly via both Anthropic API and AWS Bedrock**
+- [ ] **Organization can be configured to use Bedrock provider**
 
 ---
 
-## Sprint 4: Pricing Engine (Weeks 7-8)
+## Sprint 4: Pricing Engine + Brand Features (Weeks 7-8)
 
-**Theme:** Build intelligent pricing generation
+**Theme:** Build intelligent pricing generation and brand context
 
 ### Goals
 - Implement 4-scenario pricing matrix
 - Build pricing confirmation UX
 - Implement governance warnings
 - Enable quote table paste/upload
+- **Implement brand context features** (moved from Sprint 3)
 
-### User Stories (23 points)
+### User Stories (28 points)
 
 | ID | Story | Points | Owner |
 |----|-------|--------|-------|
@@ -408,8 +415,9 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | S4-003 | Confirm/edit pricing in modal before finalizing | 5 | Eng 2 |
 | S4-004 | See governance warnings for high discounts | 5 | Eng 1 |
 | S4-005 | Paste quote table and use it as-is | 5 | Eng 2 |
+| S4-006 | **See brand preview when editing KB content** (from Sprint 3) | 5 | Eng 2 |
 
-### Technical Tasks (39 points)
+### Technical Tasks (50 points)
 
 | ID | Task | Points | Owner |
 |----|------|--------|-------|
@@ -421,6 +429,9 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | T4-006 | Build governance warning UI components | 3 | Eng 2 |
 | T4-007 | Implement quote table paste parser | 5 | Eng 1 |
 | T4-008 | Build editable pricing table component | 5 | Eng 2 |
+| T4-009 | **Add brand preview panel to product editor** (from Sprint 3) | 3 | Eng 2 |
+| T4-010 | **Integrate brand context into Context Assembly Engine** (from Sprint 3) | 5 | Eng 1 |
+| T4-011 | **Add brand guidelines page to KB section** (from Sprint 3) | 3 | Eng 2 |
 
 ### Acceptance Criteria
 - [ ] Codified products auto-calculate with correct math
@@ -428,6 +439,9 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 - [ ] Pricing modal allows inline editing
 - [ ] Governance warnings appear at correct thresholds (30%, 40%)
 - [ ] Pasted quote tables preserve formatting and values
+- [ ] **Brand preview visible when creating/editing KB content**
+- [ ] **KB content in proposals uses brand colors and voice automatically**
+- [ ] **Brand guidelines accessible from KB navigation**
 
 ---
 
@@ -593,7 +607,7 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | S8-002 | Data is secure and isolated | 5 | Eng 1 |
 | S8-003 | Can find help documentation when needed | 3 | PM |
 
-### Technical Tasks (47 points)
+### Technical Tasks (55 points)
 
 | ID | Task | Points | Owner |
 |----|------|--------|-------|
@@ -607,6 +621,9 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | T8-008 | Write user documentation | 5 | PM |
 | T8-009 | Set up support channels | 2 | PM |
 | T8-010 | Create demo environment | 3 | Eng 2 |
+| T8-011 | **Implement API rate limiting (Node.js runtime)** | 3 | Eng 1 |
+| T8-012 | **Set up application logging (Pino)** | 2 | Eng 1 |
+| T8-013 | **Configure APM (OpenTelemetry or Datadog)** | 3 | Eng 1 |
 
 ### Launch Checklist
 

@@ -61,8 +61,8 @@ The total context budget depends on the LLM model being used:
 
 | Context Type | Target Budget | Max Budget | Source |
 |--------------|---------------|------------|--------|
-| Business Model Summary | ~500 tokens | 1,000 tokens | `organizations.settings.business_model` |
-| Brand Context | ~200 tokens | 500 tokens | `organizations.settings.brand_*` |
+| Company Profile | ~500 tokens | 1,000 tokens | `company_profiles` table |
+| Brand Context | ~200 tokens | 500 tokens | `brand_settings` table |
 | System Prompt | ~1,000 tokens | 1,500 tokens | Static template |
 
 **Total Foundational:** ~1,700 tokens (reserved, never truncated)
@@ -95,19 +95,33 @@ Playbooks:        10% =  2,900 tokens
 
 ## Context Sources
 
-### 1a. Business Model Summary
+### 1a. Company Profile
 
-**Source:** `organizations.settings.business_model.summary`
+**Source:** `company_profiles` table (dedicated table, one-to-one with organizations)
 
 **Content:**
-- Company overview and value proposition
-- Target customers and market positioning
+- Company overview and summary
+- Value proposition
+- Target customers
 - Key differentiators
-- Revenue model summary
+- Industry and market segment
+- Verification status
 
 **Retrieval:**
 ```typescript
-const businessModel = org.settings.business_model?.summary || null;
+const companyProfile = await prisma.companyProfile.findUnique({
+  where: { organizationId }
+});
+
+const companyContext = companyProfile ? {
+  summary: companyProfile.summary,
+  companyOverview: companyProfile.companyOverview,
+  valueProposition: companyProfile.valueProposition,
+  targetCustomers: companyProfile.targetCustomers,
+  keyDifferentiators: companyProfile.keyDifferentiators,
+  industry: companyProfile.industry,
+  isVerified: companyProfile.isVerified,
+} : null;
 ```
 
 **Inclusion Rules:**
@@ -119,20 +133,27 @@ const businessModel = org.settings.business_model?.summary || null;
 
 ### 1b. Brand Context
 
-**Source:** `organizations.settings`
+**Source:** `brand_settings` table (dedicated table, one-to-one with organizations)
 
 **Content:**
 - Brand voice and tone guidelines
 - Key messaging principles
-- Terminology preferences
+- Content style preferences
+- Competitive positioning
 
 **Retrieval:**
 ```typescript
-const brandContext = {
-  voice: org.settings.brand_voice,
-  tone: org.settings.brand_tone,
-  guidelines: org.settings.brand_guidelines,
-};
+const brandSettings = await prisma.brandSettings.findUnique({
+  where: { organizationId }
+});
+
+const brandContext = brandSettings ? {
+  tone: brandSettings.tone,
+  formality: brandSettings.formality,
+  keyMessages: brandSettings.keyMessages,
+  contentStyle: brandSettings.contentStyle,
+  competitivePositioning: brandSettings.competitivePositioning,
+} : null;
 ```
 
 **Inclusion Rules:**
@@ -360,15 +381,36 @@ export async function assembleContext(
   userPrompt: string,
   options: AssemblyOptions = {}
 ): Promise<AssembledContext> {
-  const org = await getOrganization(organizationId);
   const opportunity = await getOpportunity(opportunityId);
 
-  // 1. Foundational context (always included)
-  const businessModel = org.settings.business_model?.summary || '';
-  const brandContext = extractBrandContext(org.settings);
+  // 1. Foundational context from dedicated tables (always included)
+  const [companyProfile, brandSettings] = await Promise.all([
+    prisma.companyProfile.findUnique({ where: { organizationId } }),
+    prisma.brandSettings.findUnique({ where: { organizationId } }),
+  ]);
+
+  const companyContext = companyProfile ? {
+    summary: companyProfile.summary,
+    companyOverview: companyProfile.companyOverview,
+    valueProposition: companyProfile.valueProposition,
+    targetCustomers: companyProfile.targetCustomers,
+    keyDifferentiators: companyProfile.keyDifferentiators,
+    industry: companyProfile.industry,
+    isVerified: companyProfile.isVerified,
+  } : null;
+
+  const brandContext = brandSettings ? {
+    tone: brandSettings.tone,
+    formality: brandSettings.formality,
+    keyMessages: brandSettings.keyMessages,
+    contentStyle: brandSettings.contentStyle,
+    competitivePositioning: brandSettings.competitivePositioning,
+  } : null;
 
   // 2. Calculate remaining budget
-  const foundationalTokens = countTokens(businessModel + brandContext);
+  const foundationalTokens = countTokens(
+    JSON.stringify(companyContext) + JSON.stringify(brandContext)
+  );
   const remainingBudget = options.targetBudget - foundationalTokens - SAFETY_BUFFER;
 
   // 3. Calculate category budgets
@@ -387,7 +429,7 @@ export async function assembleContext(
 
   // 6. Assemble final context
   return {
-    businessModel,
+    companyProfile: companyContext,
     brandContext,
     dealContext,
     products,
@@ -402,8 +444,8 @@ export async function assembleContext(
 
 ```typescript
 interface AssembledContext {
-  // Foundational (never truncated)
-  businessModel: string | null;
+  // Foundational (never truncated) - from dedicated tables
+  companyProfile: CompanyProfileContext | null;
   brandContext: BrandContext | null;
 
   // RAG-retrieved (token-budgeted)
@@ -422,10 +464,22 @@ interface AssembledContext {
   };
 }
 
+interface CompanyProfileContext {
+  summary: string | null;
+  companyOverview: string | null;
+  valueProposition: string | null;
+  targetCustomers: string | null;
+  keyDifferentiators: string[];
+  industry: string | null;
+  isVerified: boolean;
+}
+
 interface BrandContext {
-  voice?: string;
-  tone?: string;
-  guidelines?: string;
+  tone: 'professional' | 'friendly' | 'technical' | 'consultative' | null;
+  formality: 'formal' | 'casual' | 'conversational' | null;
+  keyMessages: string[];
+  contentStyle: 'benefit_focused' | 'feature_focused' | 'outcome_focused' | null;
+  competitivePositioning: 'premium' | 'value' | 'balanced' | null;
 }
 ```
 

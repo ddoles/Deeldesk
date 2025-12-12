@@ -17,28 +17,24 @@ Corporate branding must be consistently applied across the knowledge base to ens
 
 **Location:** `/settings/organization` → Branding Section
 
-**Stored In:** `organizations.settings.brand_colors` (JSONB)
+**Stored In:** Dedicated `brand_settings` table (one-to-one with organizations)
 
-**Configuration Options:**
-```json
-{
-  "brand_colors": {
-    "primary": "#0033A0",
-    "secondary": "#2c5282",
-    "accent": "#00D4C4"
-  },
-  "logo_url": "https://cdn.example.com/logo.png",
-  "brand_voice": {
-    "tone": "professional|friendly|technical|consultative",
-    "formality": "formal|casual|conversational",
-    "key_messages": ["Innovation", "Trust", "Reliability"]
-  },
-  "brand_guidelines": {
-    "product_description_style": "benefit-focused|feature-focused|outcome-focused",
-    "competitive_positioning": "premium|value|balanced"
-  }
-}
-```
+**Database Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `primary_color` | VARCHAR(7) | Hex color e.g., "#0033A0" |
+| `secondary_color` | VARCHAR(7) | Secondary brand color |
+| `accent_color` | VARCHAR(7) | Accent color for highlights |
+| `logo_url` | TEXT | URL to organization logo |
+| `font_heading` | VARCHAR(100) | Heading font family |
+| `font_body` | VARCHAR(100) | Body text font family |
+| `tone` | ENUM | 'professional', 'friendly', 'technical', 'consultative' |
+| `formality` | ENUM | 'formal', 'casual', 'conversational' |
+| `key_messages` | TEXT[] | Array of key brand messages |
+| `content_style` | ENUM | 'benefit_focused', 'feature_focused', 'outcome_focused' |
+| `competitive_positioning` | ENUM | 'premium', 'value', 'balanced' |
+| `additional_guidelines` | JSONB | Flexible JSON for custom guidelines |
 
 **Navigation Path:**
 ```
@@ -133,23 +129,39 @@ interface Battlecard {
 
 2. **In Proposal Generation Prompts:**
    ```typescript
+   // Retrieve brand settings from dedicated table
+   const brandSettings = await prisma.brandSettings.findUnique({
+     where: { organizationId }
+   });
+
    const brandContext = {
-     colors: org.settings.brand_colors,
-     voice: org.settings.brand_voice,
-     guidelines: org.settings.brand_guidelines,
-     logo: org.settings.logo_url
+     colors: {
+       primary: brandSettings?.primaryColor,
+       secondary: brandSettings?.secondaryColor,
+       accent: brandSettings?.accentColor,
+     },
+     voice: {
+       tone: brandSettings?.tone,
+       formality: brandSettings?.formality,
+       keyMessages: brandSettings?.keyMessages ?? [],
+     },
+     guidelines: {
+       contentStyle: brandSettings?.contentStyle,
+       competitivePositioning: brandSettings?.competitivePositioning,
+     },
+     logo: brandSettings?.logoUrl,
    };
-   
+
    // Included in system prompt
    const systemPrompt = `
      ...existing prompt...
-     
+
      BRAND GUIDELINES:
      - Primary Color: ${brandContext.colors.primary}
      - Brand Voice: ${brandContext.voice.tone}
-     - Key Messages: ${brandContext.voice.key_messages.join(', ')}
-     - When describing products from knowledge base, use ${brandContext.guidelines.product_description_style} style
-     - Competitive positioning should reflect: ${brandContext.guidelines.competitive_positioning}
+     - Key Messages: ${brandContext.voice.keyMessages.join(', ')}
+     - When describing products from knowledge base, use ${brandContext.guidelines.contentStyle} style
+     - Competitive positioning should reflect: ${brandContext.guidelines.competitivePositioning}
    `;
    ```
 
@@ -289,13 +301,78 @@ interface Battlecard {
 
 ## Technical Implementation
 
-### Database Schema Updates
+### Database Schema
 
-**No schema changes needed** - Branding already stored in:
-- `organizations.settings.brand_colors`
-- `organizations.settings.brand_voice` (to be added)
-- `organizations.settings.brand_guidelines` (to be added)
-- `templates.brand_settings` (for proposal templates)
+**Dedicated `brand_settings` table** for better queryability, version history support, and cleaner separation:
+
+```sql
+CREATE TABLE brand_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID UNIQUE NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+
+  -- Visual Branding
+  primary_color VARCHAR(7),           -- Hex color e.g., "#0033A0"
+  secondary_color VARCHAR(7),
+  accent_color VARCHAR(7),
+  logo_url TEXT,
+  favicon_url TEXT,
+
+  -- Typography
+  font_heading VARCHAR(100),
+  font_body VARCHAR(100),
+
+  -- Brand Voice (enums)
+  tone brand_tone,                    -- 'professional', 'friendly', 'technical', 'consultative'
+  formality brand_formality,          -- 'formal', 'casual', 'conversational'
+  key_messages TEXT[] DEFAULT '{}',   -- Array of key brand messages
+
+  -- Content Guidelines (enums)
+  content_style content_style,        -- 'benefit_focused', 'feature_focused', 'outcome_focused'
+  competitive_positioning competitive_positioning, -- 'premium', 'value', 'balanced'
+
+  -- Additional guidelines (JSON for flexibility)
+  additional_guidelines JSONB NOT NULL DEFAULT '{}',
+
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+```
+
+**Prisma Model:**
+```prisma
+model BrandSettings {
+  id             String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                 @unique @map("organization_id") @db.Uuid
+
+  // Visual Branding
+  primaryColor   String?                @map("primary_color") @db.VarChar(7)
+  secondaryColor String?                @map("secondary_color") @db.VarChar(7)
+  accentColor    String?                @map("accent_color") @db.VarChar(7)
+  logoUrl        String?                @map("logo_url")
+
+  // Brand Voice
+  tone           BrandTone?
+  formality      BrandFormality?
+  keyMessages    String[]               @default([]) @map("key_messages")
+
+  // Content Guidelines
+  contentStyle          ContentStyle?
+  competitivePositioning CompetitivePositioning?
+
+  // Relations
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("brand_settings")
+}
+```
+
+**Benefits of dedicated table:**
+- Type-safe enum fields (tone, formality, content_style, competitive_positioning)
+- Better queryability (can query organizations by brand characteristics)
+- Cleaner API responses (no need to extract from nested JSON)
+- Easier to add version history later
+- Clear separation from general organization settings
 
 ### API Updates
 
@@ -319,31 +396,48 @@ export async function assembleContext(
   opportunityId: string,
   organizationId: string
 ): Promise<AssembledContext> {
-  const org = await getOrganization(organizationId);
-  const brandContext = {
-    colors: org.settings.brand_colors,
-    voice: org.settings.brand_voice,
-    guidelines: org.settings.brand_guidelines,
-    logo: org.settings.logo_url
-  };
-  
+  // Retrieve brand settings from dedicated table
+  const brandSettings = await prisma.brandSettings.findUnique({
+    where: { organizationId }
+  });
+
+  const brandContext = brandSettings ? {
+    colors: {
+      primary: brandSettings.primaryColor,
+      secondary: brandSettings.secondaryColor,
+      accent: brandSettings.accentColor,
+    },
+    voice: {
+      tone: brandSettings.tone,
+      formality: brandSettings.formality,
+      keyMessages: brandSettings.keyMessages,
+    },
+    guidelines: {
+      contentStyle: brandSettings.contentStyle,
+      competitivePositioning: brandSettings.competitivePositioning,
+    },
+    logo: brandSettings.logoUrl,
+  } : null;
+
   // Retrieve KB content
   const products = await getRelevantProducts(opportunityId);
   const battlecards = await getRelevantBattlecards(opportunityId);
   const playbooks = await getRelevantPlaybooks(opportunityId);
-  
-  // Apply brand styling to KB content
-  const brandedProducts = products.map(p => ({
-    ...p,
-    styledDescription: applyBrandVoice(p.description, brandContext.voice),
-    brandColors: brandContext.colors
-  }));
-  
+
+  // Apply brand styling to KB content (if brand settings exist)
+  const brandedProducts = brandContext
+    ? products.map(p => ({
+        ...p,
+        styledDescription: applyBrandVoice(p.description, brandContext.voice),
+        brandColors: brandContext.colors
+      }))
+    : products;
+
   return {
     // ... other context
     products: brandedProducts,
-    battlecards: applyBrandPositioning(battlecards, brandContext),
-    playbooks: applyBrandVoice(playbooks, brandContext.voice),
+    battlecards: brandContext ? applyBrandPositioning(battlecards, brandContext) : battlecards,
+    playbooks: brandContext ? applyBrandVoice(playbooks, brandContext.voice) : playbooks,
     brandContext
   };
 }

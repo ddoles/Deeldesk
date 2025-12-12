@@ -169,56 +169,102 @@ export async function checkRateLimit(
 }
 ```
 
-### Middleware Implementation
+### Implementation Options
+
+> **IMPORTANT**: Next.js middleware runs on the Edge Runtime, which does not support Node.js TCP sockets. This means traditional Redis clients like `ioredis` cannot be used in middleware.
+
+#### Option A: Edge-Compatible Redis (Recommended for MVP)
+
+Use Upstash Redis with their Edge-compatible `@upstash/redis` client:
 
 ```typescript
 // middleware.ts (Next.js)
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { checkRateLimit } from '@/lib/rate-limiter';
-import { getRedis } from '@/lib/redis';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+
+// Create rate limiter with Upstash (Edge-compatible)
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(120, '1 m'), // 120 requests per minute
+  analytics: true,
+});
 
 export async function middleware(request: NextRequest) {
-  const redis = getRedis();
-
-  // 1. IP-based rate limiting (always applied)
+  // Get identifier (IP for unauthenticated, will be enhanced in API routes)
   const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? 'unknown';
-  const ipLimit = await checkRateLimit(
-    redis,
-    `rate_limit:ip:${ip}:api:minute`,
-    120, // 120 requests per minute
-    60_000
-  );
 
-  if (!ipLimit.allowed) {
+  const { success, limit, remaining, reset } = await ratelimit.limit(ip);
+
+  if (!success) {
     return new NextResponse(
-      JSON.stringify({ error: 'Too many requests', retryAfter: ipLimit.retryAfter }),
+      JSON.stringify({ error: 'Too many requests' }),
       {
         status: 429,
         headers: {
           'Content-Type': 'application/json',
-          'Retry-After': String(ipLimit.retryAfter),
-          'X-RateLimit-Limit': '120',
+          'Retry-After': String(Math.ceil((reset - Date.now()) / 1000)),
+          'X-RateLimit-Limit': String(limit),
           'X-RateLimit-Remaining': '0',
-          'X-RateLimit-Reset': ipLimit.resetAt.toISOString(),
+          'X-RateLimit-Reset': new Date(reset).toISOString(),
         },
       }
     );
   }
 
-  // 2. User/org-based limits checked in API routes (after auth)
-
-  // Add rate limit headers to response
   const response = NextResponse.next();
-  response.headers.set('X-RateLimit-Remaining', String(ipLimit.remaining));
-  response.headers.set('X-RateLimit-Reset', ipLimit.resetAt.toISOString());
+  response.headers.set('X-RateLimit-Limit', String(limit));
+  response.headers.set('X-RateLimit-Remaining', String(remaining));
+  response.headers.set('X-RateLimit-Reset', new Date(reset).toISOString());
 
   return response;
 }
+
+export const config = {
+  matcher: '/api/:path*',
+};
 ```
 
-### API Route Rate Limiting
+#### Option B: API Route Handlers Only (No Middleware Rate Limiting)
+
+Skip Edge middleware entirely and implement rate limiting in API route handlers using ioredis:
+
+```typescript
+// lib/rate-limiter.ts (Node.js runtime only)
+
+import { Redis } from 'ioredis';
+
+// This runs in Node.js runtime (API routes), NOT Edge middleware
+export async function checkRateLimit(
+  redis: Redis,
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<RateLimitResult> {
+  // ... existing implementation ...
+}
+```
+
+```typescript
+// app/api/[...route]/route.ts
+export const runtime = 'nodejs'; // Explicitly use Node.js runtime
+
+import { checkRateLimit } from '@/lib/rate-limiter';
+// ... rate limiting in handler
+```
+
+#### Decision Required
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Upstash (Option A)** | Works in Edge, simple setup, built-in analytics | Additional service cost, vendor dependency |
+| **API Routes Only (Option B)** | Uses existing Redis, no new dependencies | IP-level limits only apply after route matching |
+
+**Recommendation for MVP**: Use Option B (API route handlers) for simplicity. The BullMQ Redis instance can be reused. Add Edge middleware with Upstash in Sprint 8 if DDoS protection is needed before launch.
+
+### API Route Rate Limiting (Node.js Runtime)
 
 ```typescript
 // lib/api-utils.ts

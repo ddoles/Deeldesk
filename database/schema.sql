@@ -110,6 +110,119 @@ CREATE TABLE organizations (
 -- Index for slug lookups
 CREATE INDEX idx_organizations_slug ON organizations(slug);
 
+-- ============================================================================
+-- BRANDING & COMPANY PROFILE
+-- ============================================================================
+
+-- Brand tone options
+CREATE TYPE brand_tone AS ENUM ('professional', 'friendly', 'technical', 'consultative');
+
+-- Brand formality options
+CREATE TYPE brand_formality AS ENUM ('formal', 'casual', 'conversational');
+
+-- Content style options
+CREATE TYPE content_style AS ENUM ('benefit_focused', 'feature_focused', 'outcome_focused');
+
+-- Competitive positioning options
+CREATE TYPE competitive_positioning AS ENUM ('premium', 'value', 'balanced');
+
+-- Generation source tracking
+CREATE TYPE generated_by AS ENUM ('ai', 'user');
+
+-- Confidence level for AI-generated content
+CREATE TYPE confidence_level AS ENUM ('high', 'medium', 'low');
+
+-- Brand Settings (dedicated table for organization branding)
+-- One-to-one relationship with organizations
+CREATE TABLE brand_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID UNIQUE NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+
+  -- Visual Branding
+  primary_color VARCHAR(7),           -- Hex color e.g., "#0033A0"
+  secondary_color VARCHAR(7),
+  accent_color VARCHAR(7),
+  logo_url TEXT,
+  favicon_url TEXT,
+
+  -- Typography
+  font_heading VARCHAR(100),
+  font_body VARCHAR(100),
+
+  -- Brand Voice
+  tone brand_tone,
+  formality brand_formality,
+  key_messages TEXT[] DEFAULT '{}',   -- Array of key brand messages
+
+  -- Content Guidelines
+  content_style content_style,
+  competitive_positioning competitive_positioning,
+
+  -- Additional guidelines (JSON for flexibility)
+  -- Contains: terminology preferences, words to avoid, industry jargon settings
+  additional_guidelines JSONB NOT NULL DEFAULT '{}',
+
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Index for brand settings
+CREATE INDEX idx_brand_settings_org ON brand_settings(organization_id);
+
+-- Company Profile (AI-generated or user-provided business model summary)
+-- Dedicated table for version history, audit trail, and better querying
+CREATE TABLE company_profiles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID UNIQUE NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+
+  -- Business Model Summary
+  summary TEXT,                       -- Main business model description
+
+  -- Company Details (structured for better querying)
+  company_overview TEXT,
+  value_proposition TEXT,
+  target_customers TEXT,
+  revenue_model TEXT,
+  key_differentiators TEXT[] DEFAULT '{}',
+
+  -- Industry & Market
+  industry VARCHAR(100),
+  market_segment VARCHAR(100),
+  company_size VARCHAR(50),           -- e.g., "startup", "smb", "enterprise"
+  founded_year INTEGER,
+  headquarters VARCHAR(255),
+  website TEXT,
+
+  -- Generation Metadata
+  generated_at TIMESTAMP WITH TIME ZONE,
+  generated_by generated_by,
+  confidence confidence_level,
+  sources TEXT[] DEFAULT '{}',        -- URLs used for generation
+
+  -- Verification
+  is_verified BOOLEAN NOT NULL DEFAULT false,
+  verified_at TIMESTAMP WITH TIME ZONE,
+
+  -- Edit tracking
+  last_edited_at TIMESTAMP WITH TIME ZONE,
+  last_edited_by UUID REFERENCES users(id),
+
+  -- Version tracking (for history)
+  version INTEGER NOT NULL DEFAULT 1,
+
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Index for company profiles
+CREATE INDEX idx_company_profiles_org ON company_profiles(organization_id);
+
+-- ============================================================================
+-- USERS
+-- ============================================================================
+
 -- Users
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -803,6 +916,8 @@ CREATE TABLE verification_tokens (
 -- ============================================================================
 
 -- Enable RLS on all tenant-scoped tables
+ALTER TABLE brand_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE company_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE opportunities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE deal_context_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE proposals ENABLE ROW LEVEL SECURITY;
@@ -840,6 +955,8 @@ $$ language 'plpgsql';
 
 -- Apply updated_at trigger to all tables with updated_at column
 CREATE TRIGGER update_organizations_updated_at BEFORE UPDATE ON organizations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_brand_settings_updated_at BEFORE UPDATE ON brand_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_company_profiles_updated_at BEFORE UPDATE ON company_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_org_memberships_updated_at BEFORE UPDATE ON organization_memberships FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_opportunities_updated_at BEFORE UPDATE ON opportunities FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

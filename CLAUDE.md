@@ -39,11 +39,18 @@ deeldesk/
 │   │   ├── opportunities/ # Opportunity management
 │   │   ├── proposals/     # Proposal viewer/editor
 │   │   ├── knowledge/     # Knowledge base management
+│   │   │   ├── products/       # Product catalog
+│   │   │   ├── battlecards/    # Competitive intelligence
+│   │   │   ├── playbooks/      # Sales playbooks
+│   │   │   ├── branding/       # Brand guidelines
+│   │   │   └── company-profile/ # Company profile/business model
 │   │   └── settings/      # User/org settings
 │   ├── api/               # API routes
 │   │   ├── opportunities/ # Opportunity CRUD
 │   │   ├── proposals/     # Proposal generation
 │   │   ├── knowledge/     # KB management
+│   │   │   ├── company-profile/ # Company profile CRUD + generation
+│   │   │   └── branding/       # Brand settings CRUD
 │   │   └── stream/        # SSE endpoints
 │   └── share/[id]/        # Public proposal viewer
 ├── components/
@@ -56,7 +63,8 @@ deeldesk/
 │   │   ├── anthropic.ts   # Claude client
 │   │   ├── embeddings.ts  # Embedding generation
 │   │   ├── prompts/       # System prompts
-│   │   └── context.ts     # Context Assembly Engine
+│   │   ├── context.ts     # Context Assembly Engine
+│   │   └── business-model-generator.ts # AI company profile generation
 │   ├── db/                # Database utilities
 │   │   ├── prisma.ts      # Prisma client
 │   │   └── queries/       # Typed query functions
@@ -66,7 +74,7 @@ deeldesk/
 │   ├── pricing/           # Pricing engine
 │   └── utils/             # General utilities
 ├── prisma/
-│   ├── schema.prisma      # Database schema
+│   ├── schema.prisma      # Database schema (includes brand_settings, company_profiles)
 │   └── migrations/        # Migration history
 ├── workers/
 │   └── generation.ts      # BullMQ worker for proposals
@@ -104,8 +112,8 @@ GET /api/stream/[job_id] → SSE connection for progress
 The Context Assembly Engine dynamically retrieves relevant context for each generation. See [docs/architecture/CONTEXT_ASSEMBLY.md](./docs/architecture/CONTEXT_ASSEMBLY.md) for complete documentation.
 
 **Context Layers (bottom to top):**
-1. Business Model Summary (organization-level, always included when available)
-2. Brand Context (colors, voice, tone guidelines)
+1. Company Profile (organization-level, always included when available) - from `company_profiles` table
+2. Brand Context (colors, voice, tone guidelines) - from `brand_settings` table
 3. Session Context (prompt, template, preferences)
 4. Deal Context (opportunity-specific info)
 5. Business Context (products, competitors, playbooks)
@@ -115,7 +123,7 @@ The Context Assembly Engine dynamically retrieves relevant context for each gene
 
 | Context Type | Budget | Truncation Priority | Notes |
 |--------------|--------|---------------------|-------|
-| Business Model | ~500 tokens | Never truncated | Foundational company context |
+| Company Profile | ~500 tokens | Never truncated | Foundational company context |
 | Brand Context | ~200 tokens | Never truncated | Voice, tone, guidelines |
 | Deal Context | 40% of remaining | 1 (last to truncate) | Opportunity-specific info |
 | Products | 30% of remaining | 2 | Relevant catalog entries |
@@ -123,12 +131,14 @@ The Context Assembly Engine dynamically retrieves relevant context for each gene
 | Playbooks | 10% of remaining | 4 (first to truncate) | Sales playbooks, objection handling |
 
 **Overflow Strategy:**
-1. Business Model & Brand Context are never truncated (foundational)
+1. Company Profile & Brand Context are never truncated (foundational)
 2. RAG-retrieved content is truncated by priority (Playbooks first, Deal Context last)
 3. User is warned when context is truncated with actionable guidance
 4. Truncation events are logged for monitoring
 
-The Business Model Summary is retrieved from `organizations.settings.business_model` and provides foundational context about the organization's business model, value proposition, and positioning that informs all proposal generations.
+**Foundational Context Tables:**
+- `company_profiles` - AI-generated or user-provided business model summary (one-to-one with organizations)
+- `brand_settings` - Organization branding configuration (one-to-one with organizations)
 
 ### 4. Row-Level Security (RLS)
 

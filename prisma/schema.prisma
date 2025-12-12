@@ -1,0 +1,916 @@
+// ============================================================================
+// Deeldesk.ai Prisma Schema
+// Version: 4.1
+// Database: PostgreSQL 16 with pgvector extension
+// ============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [uuid_ossp(map: "uuid-ossp"), vector, pg_trgm]
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum PlanTier {
+  free
+  pro
+  team
+  enterprise
+
+  @@map("plan_tier")
+}
+
+enum OrgRole {
+  owner
+  admin
+  manager
+  member
+  viewer
+
+  @@map("org_role")
+}
+
+enum OpportunityStatus {
+  open
+  won
+  lost
+  stalled
+
+  @@map("opportunity_status")
+}
+
+enum ProposalStatus {
+  draft
+  queued
+  generating
+  complete
+  error
+
+  @@map("proposal_status")
+}
+
+enum ContextSourceType {
+  manual_paste
+  email
+  call_transcript
+  slack
+  crm
+  meeting_notes
+  document_upload
+
+  @@map("context_source_type")
+}
+
+enum PricingScenario {
+  fully_codified
+  partially_codified
+  opaque_variable
+  user_provided
+
+  @@map("pricing_scenario")
+}
+
+enum GovernanceAction {
+  none
+  warn_only
+  require_justification
+  hard_block
+
+  @@map("governance_action")
+}
+
+enum JobStatus {
+  queued
+  processing
+  completed
+  failed
+  cancelled
+
+  @@map("job_status")
+}
+
+enum BrandTone {
+  professional
+  friendly
+  technical
+  consultative
+
+  @@map("brand_tone")
+}
+
+enum BrandFormality {
+  formal
+  casual
+  conversational
+
+  @@map("brand_formality")
+}
+
+enum ContentStyle {
+  benefit_focused
+  feature_focused
+  outcome_focused
+
+  @@map("content_style")
+}
+
+enum CompetitivePositioning {
+  premium
+  value
+  balanced
+
+  @@map("competitive_positioning")
+}
+
+enum GeneratedBy {
+  ai
+  user
+
+  @@map("generated_by")
+}
+
+enum ConfidenceLevel {
+  high
+  medium
+  low
+
+  @@map("confidence_level")
+}
+
+// ============================================================================
+// CORE ENTITIES
+// ============================================================================
+
+/// Organizations (tenants) - Unified entity for all plan tiers
+model Organization {
+  id                   String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                 String   @db.VarChar(255)
+  slug                 String   @unique @db.VarChar(100)
+  planTier             PlanTier @default(free) @map("plan_tier")
+
+  // Plan limits (null = unlimited)
+  maxProposalsPerMonth Int?     @default(5) @map("max_proposals_per_month")
+  maxKnowledgeItems    Int?     @default(50) @map("max_knowledge_items")
+  maxCompetitors       Int?     @default(3) @map("max_competitors")
+
+  // Settings (JSON) - General settings not covered by dedicated tables
+  // Contains: safe_mode_default, default_template_id, default_currency, llm_provider, etc.
+  settings             Json     @default("{}")
+
+  // Feature flags (controlled by plan_tier)
+  features             Json     @default("{}")
+
+  // Timestamps
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  memberships          OrganizationMembership[]
+  opportunities        Opportunity[]
+  proposals            Proposal[]
+  dealContextItems     DealContextItem[]
+  strategyRecords      StrategyRecord[]
+  products             Product[]
+  battlecards          Battlecard[]
+  playbooks            Playbook[]
+  templates            Template[]
+  governancePolicies   GovernancePolicy[]
+  jobs                 Job[]
+  usageTracking        UsageTracking[]
+  brandSettings        BrandSettings?
+  companyProfile       CompanyProfile?
+
+  @@index([slug])
+  @@map("organizations")
+}
+
+/// Users
+model User {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email         String    @unique @db.VarChar(255)
+  emailVerified DateTime? @map("email_verified") @db.Timestamptz
+  name          String?   @db.VarChar(255)
+  image         String?
+
+  // Password (nullable for OAuth users)
+  passwordHash  String?   @map("password_hash") @db.VarChar(255)
+
+  // Preferences (JSON)
+  preferences   Json      @default("{}")
+
+  // Timestamps
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  lastLoginAt   DateTime? @map("last_login_at") @db.Timestamptz
+
+  // Relations
+  memberships            OrganizationMembership[]
+  invitedMemberships     OrganizationMembership[] @relation("InvitedBy")
+  opportunities          Opportunity[]
+  proposals              Proposal[]
+  jobs                   Job[]
+  reviewedBattlecards    Battlecard[]
+  accounts               Account[]
+  sessions               Session[]
+  editedCompanyProfiles  CompanyProfile[]         @relation("LastEditedBy")
+
+  @@index([email])
+  @@map("users")
+}
+
+/// Organization Memberships (many-to-many)
+model OrganizationMembership {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  role           OrgRole   @default(member)
+
+  // Is this the user's default/active organization?
+  isDefault      Boolean   @default(false) @map("is_default")
+
+  // Invitation tracking
+  invitedById    String?   @map("invited_by") @db.Uuid
+  invitedAt      DateTime? @map("invited_at") @db.Timestamptz
+  acceptedAt     DateTime? @map("accepted_at") @db.Timestamptz
+
+  // Timestamps
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy      User?        @relation("InvitedBy", fields: [invitedById], references: [id])
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([userId, isDefault])
+  @@map("organization_memberships")
+}
+
+// ============================================================================
+// BRANDING & COMPANY PROFILE
+// ============================================================================
+
+/// Brand Settings - Organization branding configuration
+/// Dedicated table for better queryability and version history support
+model BrandSettings {
+  id             String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                 @unique @map("organization_id") @db.Uuid
+
+  // Visual Branding
+  primaryColor   String?                @map("primary_color") @db.VarChar(7)  // Hex color e.g., "#0033A0"
+  secondaryColor String?                @map("secondary_color") @db.VarChar(7)
+  accentColor    String?                @map("accent_color") @db.VarChar(7)
+  logoUrl        String?                @map("logo_url")
+  faviconUrl     String?                @map("favicon_url")
+
+  // Typography
+  fontHeading    String?                @map("font_heading") @db.VarChar(100)
+  fontBody       String?                @map("font_body") @db.VarChar(100)
+
+  // Brand Voice
+  tone           BrandTone?
+  formality      BrandFormality?
+  keyMessages    String[]               @default([]) @map("key_messages")
+
+  // Content Guidelines
+  contentStyle          ContentStyle?          @map("content_style")
+  competitivePositioning CompetitivePositioning? @map("competitive_positioning")
+
+  // Additional guidelines (JSON for flexibility)
+  // Contains: terminology preferences, words to avoid, industry jargon settings
+  additionalGuidelines  Json                   @default("{}") @map("additional_guidelines")
+
+  // Timestamps
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("brand_settings")
+}
+
+/// Company Profile - AI-generated or user-provided business model summary
+/// Dedicated table for version history, audit trail, and better querying
+model CompanyProfile {
+  id             String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String          @unique @map("organization_id") @db.Uuid
+
+  // Business Model Summary
+  summary        String?         // Main business model description
+
+  // Company Details (structured for better querying)
+  companyOverview    String?     @map("company_overview")
+  valueProposition   String?     @map("value_proposition")
+  targetCustomers    String?     @map("target_customers")
+  revenueModel       String?     @map("revenue_model")
+  keyDifferentiators String[]    @default([]) @map("key_differentiators")
+
+  // Industry & Market
+  industry       String?         @db.VarChar(100)
+  marketSegment  String?         @map("market_segment") @db.VarChar(100)
+  companySize    String?         @map("company_size") @db.VarChar(50)  // e.g., "startup", "smb", "enterprise"
+  foundedYear    Int?            @map("founded_year")
+  headquarters   String?         @db.VarChar(255)
+  website        String?
+
+  // Generation Metadata
+  generatedAt    DateTime?       @map("generated_at") @db.Timestamptz
+  generatedBy    GeneratedBy?    @map("generated_by")
+  confidence     ConfidenceLevel?
+  sources        String[]        @default([])  // URLs used for generation
+
+  // Verification
+  isVerified     Boolean         @default(false) @map("is_verified")
+  verifiedAt     DateTime?       @map("verified_at") @db.Timestamptz
+
+  // Edit tracking
+  lastEditedAt   DateTime?       @map("last_edited_at") @db.Timestamptz
+  lastEditedById String?         @map("last_edited_by") @db.Uuid
+
+  // Version tracking (for history)
+  version        Int             @default(1)
+
+  // Timestamps
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lastEditedBy   User?           @relation("LastEditedBy", fields: [lastEditedById], references: [id])
+
+  @@index([organizationId])
+  @@map("company_profiles")
+}
+
+// ============================================================================
+// OPPORTUNITY & PROPOSAL ENTITIES
+// ============================================================================
+
+/// Opportunities (parent entity for all deal-related data)
+model Opportunity {
+  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String            @map("organization_id") @db.Uuid
+  userId            String            @map("user_id") @db.Uuid
+
+  // Basic info
+  name              String            @db.VarChar(255)
+  description       String?
+  status            OpportunityStatus @default(open)
+
+  // CRM integration
+  externalId        String?           @map("external_id") @db.VarChar(255)
+  externalSource    String?           @map("external_source") @db.VarChar(50)
+  externalUrl       String?           @map("external_url")
+
+  // Deal metadata
+  expectedCloseDate DateTime?         @map("expected_close_date") @db.Date
+  expectedValue     Decimal?          @map("expected_value") @db.Decimal(15, 2)
+  currency          String?           @default("USD") @db.VarChar(3)
+
+  // Aggregated deal context (JSON)
+  dealSummary       Json              @default("{}") @map("deal_summary")
+
+  // Timestamps
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  closedAt          DateTime?         @map("closed_at") @db.Timestamptz
+
+  // Relations
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proposals         Proposal[]
+  dealContextItems  DealContextItem[]
+  strategyRecords   StrategyRecord[]
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([organizationId, status])
+  @@index([organizationId, externalSource, externalId])
+  @@map("opportunities")
+}
+
+/// Deal Context Items (detailed context for each opportunity)
+model DealContextItem {
+  id             String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  opportunityId  String            @map("opportunity_id") @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+
+  // Source information
+  sourceType     ContextSourceType @map("source_type")
+  sourceMetadata Json              @default("{}") @map("source_metadata")
+
+  // Content
+  rawContent     String            @map("raw_content")
+  parsedContent  Json              @default("{}") @map("parsed_content")
+
+  // Vector embedding for semantic search (1536 dimensions for OpenAI)
+  // Note: Prisma doesn't natively support pgvector, use raw queries for vector operations
+  embedding      Unsupported("vector(1536)")?
+
+  // Timestamps
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  opportunity    Opportunity       @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId])
+  @@index([organizationId])
+  @@map("deal_context_items")
+}
+
+/// Proposals (children of Opportunities)
+model Proposal {
+  id                  String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  opportunityId       String          @map("opportunity_id") @db.Uuid
+  organizationId      String          @map("organization_id") @db.Uuid
+  userId              String          @map("user_id") @db.Uuid
+
+  // Version tracking
+  version             Int             @default(1)
+  parentVersionId     String?         @map("parent_version_id") @db.Uuid
+
+  // Generation
+  status              ProposalStatus  @default(draft)
+  prompt              String?
+  iterationPrompt     String?         @map("iteration_prompt")
+
+  // Generated content (JSON)
+  slides              Json            @default("[]")
+
+  // Pricing data
+  pricingScenario     PricingScenario? @map("pricing_scenario")
+  pricingData         Json            @default("{}") @map("pricing_data")
+
+  // Strategy extraction status
+  strategyExtracted   Boolean         @default(false) @map("strategy_extracted")
+
+  // Generation metadata (JSON)
+  generationMetadata  Json            @default("{}") @map("generation_metadata")
+
+  // Sharing
+  shareId             String?         @unique @map("share_id") @db.VarChar(32)
+  shareEnabled        Boolean         @default(false) @map("share_enabled")
+  sharePasswordHash   String?         @map("share_password_hash") @db.VarChar(255)
+
+  // Analytics
+  viewCount           Int             @default(0) @map("view_count")
+  lastViewedAt        DateTime?       @map("last_viewed_at") @db.Timestamptz
+
+  // Error tracking
+  errorMessage        String?         @map("error_message")
+  errorDetails        Json?           @map("error_details")
+
+  // Timestamps
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  opportunity         Opportunity     @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  organization        Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentVersion       Proposal?       @relation("ProposalVersions", fields: [parentVersionId], references: [id])
+  childVersions       Proposal[]      @relation("ProposalVersions")
+  strategyRecords     StrategyRecord[]
+  proposalViews       ProposalView[]
+
+  @@index([opportunityId])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([organizationId, status])
+  @@map("proposals")
+}
+
+/// Strategy Records (extracted PPS data from proposals)
+model StrategyRecord {
+  id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  proposalId     String             @map("proposal_id") @db.Uuid
+  opportunityId  String             @map("opportunity_id") @db.Uuid
+  organizationId String             @map("organization_id") @db.Uuid
+
+  // Positioning data (JSON)
+  positioning    Json               @default("{}")
+
+  // Pricing data (JSON)
+  pricing        Json               @default("{}")
+
+  // Solutioning data (JSON)
+  solutioning    Json               @default("{}")
+
+  // Competitive data (JSON)
+  competitive    Json               @default("{}")
+
+  // Outcome (populated when opportunity closes)
+  outcome        OpportunityStatus?
+  outcomeNotes   String?            @map("outcome_notes")
+
+  // Timestamps
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  proposal       Proposal           @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  opportunity    Opportunity        @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([proposalId])
+  @@index([opportunityId])
+  @@index([organizationId])
+  @@index([organizationId, outcome])
+  @@map("strategy_records")
+}
+
+// ============================================================================
+// KNOWLEDGE BASE ENTITIES
+// ============================================================================
+
+/// Products (product catalog)
+model Product {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String   @map("organization_id") @db.Uuid
+
+  // Basic info
+  name             String   @db.VarChar(255)
+  description      String?
+  category         String?  @db.VarChar(100)
+
+  // Pricing (for codified pricing scenarios)
+  pricingModel     String?  @map("pricing_model") @db.VarChar(50)
+  basePrice        Decimal? @map("base_price") @db.Decimal(15, 2)
+  currency         String?  @default("USD") @db.VarChar(3)
+  billingFrequency String?  @map("billing_frequency") @db.VarChar(20)
+
+  // Detailed pricing tiers (JSON)
+  pricingTiers     Json     @default("[]") @map("pricing_tiers")
+
+  // Features and details (JSON)
+  features         Json     @default("[]")
+  useCases         Json     @default("[]") @map("use_cases")
+
+  // For RAG retrieval
+  searchableContent String?  @map("searchable_content")
+  embedding        Unsupported("vector(1536)")?
+
+  // Status
+  isActive         Boolean  @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([organizationId, isActive])
+  @@index([organizationId, category])
+  @@map("products")
+}
+
+/// Battlecards (competitive intelligence)
+model Battlecard {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String    @map("organization_id") @db.Uuid
+
+  // Competitor info
+  competitorName    String    @map("competitor_name") @db.VarChar(255)
+  competitorWebsite String?   @map("competitor_website")
+  competitorLogoUrl String?   @map("competitor_logo_url")
+
+  // Battlecard content
+  rawContent        String?   @map("raw_content")
+  structuredContent Json      @default("{}") @map("structured_content")
+
+  // For RAG retrieval
+  searchableContent String?   @map("searchable_content")
+  embedding         Unsupported("vector(1536)")?
+
+  // Freshness tracking
+  lastReviewedAt    DateTime? @map("last_reviewed_at") @db.Timestamptz
+  reviewedById      String?   @map("reviewed_by") @db.Uuid
+  isStale           Boolean   @default(false) @map("is_stale")
+
+  // Status
+  isActive          Boolean   @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reviewedBy        User?        @relation(fields: [reviewedById], references: [id])
+
+  @@index([organizationId])
+  @@index([organizationId, competitorName])
+  @@map("battlecards")
+}
+
+/// Playbooks (sales playbooks, objection handling)
+model Playbook {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String   @map("organization_id") @db.Uuid
+
+  // Basic info
+  name              String   @db.VarChar(255)
+  description       String?
+
+  // Categorization
+  category          String?  @db.VarChar(100)
+  vertical          String?  @db.VarChar(100)
+  segment           String?  @db.VarChar(100)
+
+  // Content
+  content           String
+  structuredContent Json     @default("{}") @map("structured_content")
+
+  // For RAG retrieval
+  searchableContent String?  @map("searchable_content")
+  embedding         Unsupported("vector(1536)")?
+
+  // Status
+  isActive          Boolean  @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([organizationId, category])
+  @@index([organizationId, vertical])
+  @@map("playbooks")
+}
+
+// ============================================================================
+// TEMPLATES
+// ============================================================================
+
+/// Proposal Templates
+model Template {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid // NULL = system template
+
+  // Basic info
+  name           String   @db.VarChar(255)
+  description    String?
+
+  // Categorization
+  vertical       String?  @db.VarChar(100)
+  isSystem       Boolean  @default(false) @map("is_system")
+
+  // Template content (JSON)
+  slideStructure Json     @default("[]") @map("slide_structure")
+
+  // Styling (JSON) - template-specific brand overrides
+  brandOverrides Json     @default("{}") @map("brand_overrides")
+
+  // Usage tracking
+  useCount       Int      @default(0) @map("use_count")
+
+  // Status
+  isActive       Boolean  @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([isSystem])
+  @@index([vertical])
+  @@map("templates")
+}
+
+// ============================================================================
+// GOVERNANCE & PRICING CONFIGURATION
+// ============================================================================
+
+/// Governance Policies
+model GovernancePolicy {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+
+  // Scope
+  name           String   @db.VarChar(255)
+  scopeType      String   @map("scope_type") @db.VarChar(50)
+  scopeValue     String?  @map("scope_value") @db.VarChar(255)
+
+  // Priority (higher = takes precedence)
+  priority       Int      @default(0)
+
+  // Status
+  isActive       Boolean  @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rules          GovernanceRule[]
+
+  @@index([organizationId])
+  @@map("governance_policies")
+}
+
+/// Governance Rules
+model GovernanceRule {
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  policyId        String           @map("policy_id") @db.Uuid
+
+  // Rule definition
+  ruleType        String           @map("rule_type") @db.VarChar(50)
+  operator        String           @db.VarChar(20)
+  threshold       Decimal          @db.Decimal(10, 4)
+
+  // Target roles (JSON)
+  targetRoles     Json             @default("[]") @map("target_roles")
+
+  // Action
+  action          GovernanceAction @default(warn_only)
+  messageTemplate String?          @map("message_template")
+
+  // Status
+  isActive        Boolean          @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  policy          GovernancePolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+  @@map("governance_rules")
+}
+
+// ============================================================================
+// ASYNC JOB QUEUE
+// ============================================================================
+
+/// Jobs (for BullMQ tracking and debugging)
+model Job {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String    @map("organization_id") @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+
+  // Job info
+  type            String    @db.VarChar(50)
+  status          JobStatus @default(queued)
+
+  // Reference to related entity
+  referenceType   String?   @map("reference_type") @db.VarChar(50)
+  referenceId     String?   @map("reference_id") @db.Uuid
+
+  // Job data (JSON)
+  payload         Json      @default("{}")
+  result          Json?
+
+  // Progress tracking (for SSE)
+  progress        Int?      @default(0)
+  progressMessage String?   @map("progress_message")
+
+  // Error tracking
+  errorMessage    String?   @map("error_message")
+  errorDetails    Json?     @map("error_details")
+  retryCount      Int       @default(0) @map("retry_count")
+  maxRetries      Int       @default(3) @map("max_retries")
+
+  // Timing
+  startedAt       DateTime? @map("started_at") @db.Timestamptz
+  completedAt     DateTime? @map("completed_at") @db.Timestamptz
+
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([referenceType, referenceId])
+  @@map("jobs")
+}
+
+// ============================================================================
+// ANALYTICS & TRACKING
+// ============================================================================
+
+/// Proposal Views (for shared proposals)
+model ProposalView {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  proposalId      String   @map("proposal_id") @db.Uuid
+
+  // Viewer info (anonymous)
+  viewerIpHash    String?  @map("viewer_ip_hash") @db.VarChar(64)
+  viewerUserAgent String?  @map("viewer_user_agent")
+
+  // View data
+  viewedAt        DateTime @default(now()) @map("viewed_at") @db.Timestamptz
+  timeSpentSeconds Int?    @map("time_spent_seconds")
+  maxScrollDepth  Int?     @map("max_scroll_depth")
+  slidesViewed    Json     @default("[]") @map("slides_viewed")
+
+  // Relations
+  proposal        Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@index([proposalId])
+  @@index([proposalId, viewedAt])
+  @@map("proposal_views")
+}
+
+/// Usage Tracking (for plan limits)
+model UsageTracking {
+  id                    String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId        String       @map("organization_id") @db.Uuid
+
+  // Period
+  periodStart           DateTime     @map("period_start") @db.Date
+  periodEnd             DateTime     @map("period_end") @db.Date
+
+  // Usage counts
+  proposalsGenerated    Int          @default(0) @map("proposals_generated")
+  knowledgeItemsCount   Int          @default(0) @map("knowledge_items_count")
+  competitorsCount      Int          @default(0) @map("competitors_count")
+
+  // Timestamps
+  createdAt             DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, periodStart])
+  @@index([organizationId, periodStart])
+  @@map("usage_tracking")
+}
+
+// ============================================================================
+// NEXTAUTH.JS TABLES
+// ============================================================================
+
+/// Accounts (OAuth providers)
+model Account {
+  id                String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String  @db.VarChar(255)
+  provider          String  @db.VarChar(255)
+  providerAccountId String  @map("provider_account_id") @db.VarChar(255)
+  refresh_token     String?
+  access_token      String?
+  expires_at        BigInt?
+  token_type        String? @db.VarChar(255)
+  scope             String? @db.VarChar(255)
+  id_token          String?
+  session_state     String? @db.VarChar(255)
+
+  // Relations
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+/// Sessions
+model Session {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sessionToken String   @unique @map("session_token") @db.VarChar(255)
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime @db.Timestamptz
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+/// Verification Tokens (email verification, password reset)
+model VerificationToken {
+  identifier String   @db.VarChar(255)
+  token      String   @unique @db.VarChar(255)
+  expires    DateTime @db.Timestamptz
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}
