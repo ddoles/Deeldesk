@@ -17,7 +17,7 @@ services:
     container_name: deeldesk-postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "5434:5432"  # Using 5434 to avoid conflict with local postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password

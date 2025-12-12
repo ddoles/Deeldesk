@@ -1,9 +1,9 @@
 # Deeldesk.ai Sprint Plan
 ## Phase 0 De-Risking & MVP Development
 
-**Document Version:** 1.1
-**Last Updated:** December 2025
-**Status:** Ready for Execution
+**Document Version:** 1.2
+**Last Updated:** December 12, 2025
+**Status:** Phase 0 Day 0 Complete - Ready for Spikes
 **Note:** This document contains detailed spike documentation and alternative approaches. For the primary execution plan, see `IMPLEMENTATION_PLAN.md`.  
 
 ---
@@ -38,33 +38,36 @@ A key addition in this version is **Spike 4: LLM Data Privacy Architecture**, wh
 
 #### Prerequisite Tasks
 
-- [ ] **Request AWS Bedrock Access** — Claude 3.5 Sonnet model access typically takes 24-48 hours
-- [ ] **Verify docker-compose** — Run `docker-compose up -d` and confirm all services start
-- [ ] **Bootstrap Next.js Project** — Initialize project structure for spike code
+- [x] **Request AWS Bedrock Access** — ✅ Verified working (us-west-2, Claude 3.5 Sonnet)
+- [x] **Verify docker-compose** — ✅ All services running (Postgres:5434, Redis:6379, MinIO:9000)
+- [x] **Bootstrap Next.js Project** — ✅ Next.js 16 with TypeScript, Tailwind, Prisma initialized
 
-#### Task D0-001: Project Bootstrap (4 hours)
+#### Task D0-001: Project Bootstrap (4 hours) ✅ COMPLETE
 
 **Owner:** Engineer 1
+**Completed:** December 12, 2025
 
 ```bash
-# Initialize Next.js 14 with TypeScript
-npx create-next-app@14 . --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
+# Actual commands used (Next.js 16 was installed as latest stable)
+npm init -y
+npm install next@latest react react-dom typescript tailwindcss
 
-# Install core dependencies
-npm install prisma @prisma/client ioredis bullmq @anthropic-ai/sdk openai zod
+# Core dependencies installed
+npm install prisma@5 @prisma/client@5 ioredis bullmq @anthropic-ai/sdk openai zod pptxgenjs jszip @aws-sdk/client-bedrock-runtime
 
-# Install dev dependencies
-npm install -D vitest @testing-library/react playwright
+# Dev dependencies
+npm install -D vitest @types/node @types/react eslint
 ```
 
-- [ ] Initialize Next.js 14 project with TypeScript and App Router
-- [ ] Configure ESLint and Prettier with project conventions
-- [ ] Set up path aliases (`@/` for src)
-- [ ] Configure Tailwind CSS with design tokens from `DESIGN_SYSTEM.md`
-- [ ] Initialize Prisma and generate schema from `DATABASE_SCHEMA.sql`
-- [ ] Create `.env.local` from `env.example`
-- [ ] Verify `npm run dev` starts successfully
-- [ ] Verify `docker-compose up -d` connects (Postgres, Redis, MinIO)
+- [x] Initialize Next.js project with TypeScript and App Router (Next.js 16)
+- [x] Configure ESLint with project conventions
+- [x] Set up path aliases (`@/*` for root)
+- [x] Configure Tailwind CSS with Deeldesk brand colors
+- [x] Initialize Prisma and sync schema with database (21 tables created)
+- [x] Create `.env` with all required credentials
+- [x] Verify `npm run build` completes successfully
+- [x] Verify `docker-compose up -d` connects (Postgres:5434, Redis:6379, MinIO:9000)
+- [x] Verify all API keys working (Anthropic, OpenAI, AWS Bedrock)
 
 #### Task D0-002: Spike Harness Setup (2 hours)
 
@@ -89,15 +92,15 @@ npm install -D vitest @testing-library/react playwright
       └── cost-analysis/   # Cost comparisons
   ```
 
-#### Architecture Decisions to Lock (Day 0)
+#### Architecture Decisions to Lock (Day 0) ✅ LOCKED
 
-Before spikes begin, confirm these decisions:
+Decisions confirmed on December 12, 2025:
 
 | Decision | Options | Recommendation | Status |
 |----------|---------|----------------|--------|
-| **RLS Strategy** | (A) DB-enforced RLS, (B) Application-layer scoping | **B for MVP** — Prisma + connection pooling makes DB-level RLS complex. Enforce at application layer, add DB RLS in Phase 2. | DECIDE |
-| **Rate Limiting** | (A) Edge + Upstash, (B) API routes + ioredis | **B for MVP** — Simpler, uses existing Redis. Add Edge in Sprint 8 if needed. | DECIDE |
-| **Embedding Provider** | (A) Always OpenAI, (B) Match LLM provider | **A unless data sovereignty required** — Avoids migration complexity. | DECIDE |
+| **RLS Strategy** | (A) DB-enforced RLS, (B) Application-layer scoping | **B for MVP** — Prisma + connection pooling makes DB-level RLS complex. Enforce at application layer, add DB RLS in Phase 2. | ✅ LOCKED |
+| **Rate Limiting** | (A) Edge + Upstash, (B) API routes + ioredis | **B for MVP** — Simpler, uses existing Redis. Add Edge in Sprint 8 if needed. | ✅ LOCKED |
+| **Embedding Provider** | (A) Always OpenAI, (B) Match LLM provider | **A** — OpenAI text-embedding-3-small (1536 dimensions) verified working. | ✅ LOCKED |
 
 ### Sprint 0: De-Risking Spikes
 

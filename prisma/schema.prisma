@@ -5,14 +5,15 @@
 // ============================================================================
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [uuid_ossp(map: "uuid-ossp"), vector, pg_trgm]
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  // Note: Extensions (uuid-ossp, vector, pg_trgm) are enabled manually via SQL
+  // See database/init-db.sql or docker-compose init script
 }
 
 // ============================================================================
