@@ -90,7 +90,7 @@ All Sprint 1 deliverables have been implemented:
 Continue MVP Development:
 1. ~~Phase 0 Spikes~~ ✅ Complete
 2. ~~Sprint 1: Foundation~~ ✅ Complete
-3. **Sprint 2:** Core Generation (proposal creation, streaming)
+3. ~~Sprint 2: Core Generation~~ ✅ Complete
 4. **Sprint 3:** Context & Knowledge Base
 
 ---
@@ -389,56 +389,67 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 
 ---
 
-## Sprint 2: Core Generation (Weeks 3-4)
+## Sprint 2: Core Generation (Weeks 3-4) ✅ COMPLETE
 
 **Theme:** Build the proposal generation engine
 
 ### Goals
-- Implement proposal creation from Opportunity
-- Build Context Assembly Engine (basic version)
-- Implement SSE streaming for generation progress
-- Create proposal viewer UI
-- **Implement LLM Provider abstraction layer**
+- ✅ Implement proposal creation from Opportunity
+- ✅ Build Context Assembly Engine (basic version)
+- ✅ Implement SSE streaming for generation progress
+- ✅ Create proposal viewer UI
+- ✅ **Implement LLM Provider abstraction layer**
 
 ### User Stories (24 points)
 
-| ID | Story | Points | Owner |
-|----|-------|--------|-------|
-| S2-001 | Enter natural language prompt to generate proposal | 8 | Eng 1 |
-| S2-002 | See real-time progress while proposal generates | 5 | Eng 2 |
-| S2-003 | View generated proposal with slide preview | 5 | Eng 2 |
-| S2-004 | See proposal listed under parent Opportunity | 3 | Eng 2 |
-| S2-005 | Configure LLM provider for organization | 3 | Eng 1 |
+| ID | Story | Points | Status |
+|----|-------|--------|--------|
+| S2-001 | Enter natural language prompt to generate proposal | 8 | ✅ |
+| S2-002 | See real-time progress while proposal generates | 5 | ✅ |
+| S2-003 | View generated proposal with slide preview | 5 | ✅ |
+| S2-004 | See proposal listed under parent Opportunity | 3 | ✅ |
+| S2-005 | Configure LLM provider for organization | 3 | ⏭️ Sprint 3 |
 
 ### Technical Tasks (37 points)
 
-> **NOTE**: BedrockProvider moved to Sprint 3 to balance sprint capacity (~40 points target).
+> **NOTE**: BedrockProvider and LLM settings moved to Sprint 3.
 
-| ID | Task | Points | Owner |
-|----|------|--------|-------|
-| T2-001 | Implement Proposal entity schema | 3 | Eng 1 |
-| T2-002 | Set up BullMQ + Redis for async jobs | 5 | Eng 1 |
-| T2-003 | Implement LLMProvider interface and factory | 5 | Eng 1 |
-| T2-004 | Implement AnthropicDirectProvider | 5 | Eng 1 |
-| T2-005 | ~~Implement BedrockProvider with streaming~~ | ~~8~~ | **MOVED TO SPRINT 3** |
-| T2-006 | Implement basic Context Assembly Engine | 8 | Eng 1 |
-| T2-007 | Build SSE streaming endpoint | 5 | Eng 2 |
-| T2-008 | Implement slide content generation prompts | 8 | Eng 1 |
-| T2-009 | Build proposal viewer component | 5 | Eng 2 |
-| T2-010 | Implement generation progress UI | 3 | Eng 2 |
-| T2-011 | ~~Add LLM provider selection to org settings~~ | ~~3~~ | **MOVED TO SPRINT 3** |
-| T2-012 | Implement active proposal query logic (most recent) | 2 | Eng 1 |
-| T2-013 | Add version increment on new proposal creation | 1 | Eng 1 |
+| ID | Task | Points | Status |
+|----|------|--------|--------|
+| T2-001 | Implement Proposal entity schema | 3 | ✅ |
+| T2-002 | Set up BullMQ + Redis for async jobs | 5 | ✅ |
+| T2-003 | Implement LLMProvider interface and factory | 5 | ✅ |
+| T2-004 | Implement AnthropicDirectProvider | 5 | ✅ |
+| T2-005 | ~~Implement BedrockProvider with streaming~~ | ~~8~~ | ⏭️ Sprint 3 |
+| T2-006 | Implement basic Context Assembly Engine | 8 | ✅ |
+| T2-007 | Build SSE streaming endpoint | 5 | ✅ |
+| T2-008 | Implement slide content generation prompts | 8 | ✅ |
+| T2-009 | Build proposal viewer component | 5 | ✅ |
+| T2-010 | Implement generation progress UI | 3 | ✅ |
+| T2-011 | ~~Add LLM provider selection to org settings~~ | ~~3~~ | ⏭️ Sprint 3 |
+| T2-012 | Implement active proposal query logic (most recent) | 2 | ✅ |
+| T2-013 | Add version increment on new proposal creation | 1 | ✅ |
 
 ### Acceptance Criteria
-- [ ] User can generate 5-slide proposal from prompt
-- [ ] SSE streams progress states (understanding → crafting → generating → complete)
-- [ ] Generated proposal displays in viewer
-- [ ] Proposal linked to parent Opportunity
-- [ ] Generation completes in <60 seconds
-- [ ] **Proposals generate correctly via Anthropic API** (Bedrock in Sprint 3)
-- [ ] **Most recent proposal is treated as active automatically**
-- [ ] **New proposals increment version number correctly**
+- [x] User can generate 5-slide proposal from prompt
+- [x] SSE streams progress states (understanding → crafting → generating → complete)
+- [x] Generated proposal displays in viewer
+- [x] Proposal linked to parent Opportunity
+- [x] Generation completes in <60 seconds
+- [x] **Proposals generate correctly via Anthropic API** (Bedrock in Sprint 3)
+- [x] **Most recent proposal is treated as active automatically**
+- [x] **New proposals increment version number correctly**
+
+### Key Files Implemented
+- `lib/ai/types.ts` - LLM provider type definitions
+- `lib/ai/providers/anthropic.ts` - Anthropic Direct provider
+- `lib/ai/provider-factory.ts` - Provider selection factory
+- `lib/ai/proposal-generator.ts` - Slide generation with streaming
+- `lib/ai/context-assembly.ts` - Context Assembly Engine
+- `lib/queue/redis.ts` - Redis connection utility
+- `lib/queue/proposal-queue.ts` - BullMQ queue and worker
+- `app/api/v1/proposals/*` - REST API + SSE streaming
+- `components/proposals/*` - Viewer and progress UI
 
 ---
 
