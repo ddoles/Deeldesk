@@ -388,8 +388,7 @@ docs/
 
 For design questions or feedback, refer to:
 - **Design System** - `DESIGN_SYSTEM.md`
-- **Implementation Plan** - `../IMPLEMENTATION_PLAN.md`
-- **Sprint Plan** - `../planning/SPRINT_PLAN.md`
+- **Implementation Plan** - `../planning/IMPLEMENTATION_PLAN.md`
 
 ---
 

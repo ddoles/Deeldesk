@@ -207,6 +207,9 @@ model User {
   // Preferences (JSON)
   preferences   Json      @default("{}")
 
+  // Platform administration
+  isPlatformAdmin Boolean @default(false) @map("is_platform_admin")
+
   // Timestamps
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz

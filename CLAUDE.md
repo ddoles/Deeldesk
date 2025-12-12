@@ -55,14 +55,20 @@ deeldesk/
 │   │   │   ├── playbooks/      # Sales playbooks
 │   │   │   ├── branding/       # Brand guidelines
 │   │   │   └── company-profile/ # Company profile/business model
-│   │   └── settings/      # User/org settings
+│   │   └── settings/      # Organization settings (members, general)
+│   ├── admin/             # Platform admin routes (isPlatformAdmin only)
+│   │   ├── users/         # User management
+│   │   └── organizations/ # Organization management
 │   ├── api/               # API routes
-│   │   ├── opportunities/ # Opportunity CRUD
-│   │   ├── proposals/     # Proposal generation
-│   │   ├── knowledge/     # KB management
-│   │   │   ├── company-profile/ # Company profile CRUD + generation
-│   │   │   └── branding/       # Brand settings CRUD
-│   │   └── stream/        # SSE endpoints
+│   │   ├── v1/            # Versioned API (primary)
+│   │   │   ├── opportunities/  # Opportunity CRUD
+│   │   │   ├── organizations/  # Organization management
+│   │   │   ├── admin/          # Platform admin endpoints
+│   │   │   │   ├── users/      # User CRUD (platform admin)
+│   │   │   │   └── memberships/ # Membership role changes
+│   │   │   └── knowledge/      # KB management
+│   │   ├── auth/          # NextAuth.js handlers
+│   │   └── debug/         # Debug endpoints (session info)
 │   └── share/[id]/        # Public proposal viewer
 ├── components/
 │   ├── ui/                # Base UI components (shadcn/ui)
@@ -165,7 +171,37 @@ const opportunities = await prisma.opportunity.findMany({
 const opportunities = await prisma.opportunity.findMany();
 ```
 
-### 5. Pricing Engine (4-Scenario Matrix)
+### 5. Authentication & Roles
+
+**Platform-Level Role:**
+- `isPlatformAdmin` (boolean on User) - Grants access to `/admin/*` routes for managing all users and organizations
+
+**Organization-Level Roles** (via `OrganizationMembership`):
+| Role | Permissions |
+|------|-------------|
+| `owner` | Full access, billing, can delete organization |
+| `admin` | Manage members, settings, all content |
+| `manager` | Create and manage opportunities and proposals |
+| `member` | Create opportunities and proposals |
+| `viewer` | View only access |
+
+**Session Structure:**
+```typescript
+session.user = {
+  id: string;
+  email: string;
+  name: string | null;
+  organizationId: string;      // Current org context
+  organizationRole: OrgRole;   // Role in current org
+  isPlatformAdmin: boolean;    // Platform-wide admin
+}
+```
+
+**Admin Routes:**
+- `/admin/*` - Platform admin (requires `isPlatformAdmin: true`)
+- `/settings/*` - Organization settings (requires `owner` or `admin` role)
+
+### 6. Pricing Engine (4-Scenario Matrix)
 
 > ⚠️ **CRITICAL (Spike 2 Finding):** LLM math accuracy is only 60% with drift up to $1,000. ALL pricing calculations MUST be done in code. The LLM's role is to extract line items and structure; the pricing engine (TypeScript) calculates all totals.
 
@@ -629,7 +665,7 @@ npm run format           # Format with Prettier
 ## References
 
 - [PRD v4.0](./docs/product/Deeldesk_PRD_v4_0.docx) - Full product requirements
-- [Sprint Plan](./docs/planning/SPRINT_PLAN.md) - Development timeline
+- [Implementation Plan](./docs/planning/IMPLEMENTATION_PLAN.md) - Development timeline and execution plan
 - [Database Schema](./docs/architecture/DATABASE_SCHEMA.sql) - Full schema with comments
 - [LLM Provider Architecture](./docs/architecture/LLM_PROVIDER_ARCHITECTURE.md) - Multi-provider design for data sovereignty
 - [Spike Findings](./spikes/SPIKE_FINDINGS.md) - Phase 0 technical validation results

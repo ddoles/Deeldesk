@@ -7,8 +7,7 @@ Welcome to the Deeldesk.ai documentation. This directory contains all project do
 ## 📋 Quick Navigation
 
 ### Planning Documents
-- **[Implementation Plan](./planning/IMPLEMENTATION_PLAN.md)** - Complete development roadmap
-- **[Sprint Plan](./planning/SPRINT_PLAN.md)** - Sprint-by-sprint development plan
+- **[Implementation Plan](./planning/IMPLEMENTATION_PLAN.md)** - Complete development roadmap and sprint execution
 - **[Changes Summary](./planning/CHANGES_SUMMARY.md)** - Recent changes and updates
 
 ### Architecture Documents
@@ -63,8 +62,7 @@ docs/
 ## 🔍 Finding Documents
 
 ### By Phase
-- **Phase 0:** See [Sprint Plan](./planning/SPRINT_PLAN.md) - Phase 0 section
-- **MVP Development:** See [Implementation Plan](./planning/IMPLEMENTATION_PLAN.md)
+- **Phase 0 & MVP Development:** See [Implementation Plan](./planning/IMPLEMENTATION_PLAN.md)
 - **Architecture Decisions:** See [Architecture](./architecture/) directory
 
 ### By Topic
@@ -97,7 +95,7 @@ docs/
 1. **New to the project?** Start with [Implementation Plan](./planning/IMPLEMENTATION_PLAN.md)
 2. **Developer?** Read [CLAUDE.md](../CLAUDE.md) and [Database Schema](./architecture/DATABASE_SCHEMA.sql)
 3. **Designer?** Check [Design System](./design/DESIGN_SYSTEM.md) and [UX Guide](./design/UX_GUIDE.md)
-4. **Product Manager?** Review [Sprint Plan](./planning/SPRINT_PLAN.md) and [PRD](./product/Deeldesk_PRD_v4_0.docx)
+4. **Product Manager?** Review [Implementation Plan](./planning/IMPLEMENTATION_PLAN.md) and [PRD](./product/Deeldesk_PRD_v4_0.docx)
 
 ---
 

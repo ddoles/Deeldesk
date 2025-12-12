@@ -218,7 +218,7 @@ deeldesk/
 │
 ├── docs/                    # Documentation
 │   ├── Deeldesk_PRD_v4_0.docx
-│   └── docs/planning/SPRINT_PLAN.md
+│   └── docs/planning/IMPLEMENTATION_PLAN.md
 │
 ├── CLAUDE.md               # Claude Code context
 ├── docs/architecture/DATABASE_SCHEMA.sql     # Full schema reference
@@ -496,7 +496,7 @@ chore: update dependencies
 - **[CLAUDE.md](./CLAUDE.md)** — Claude Code context and coding conventions
 - **[docs/architecture/DATABASE_SCHEMA.sql](./docs/architecture/DATABASE_SCHEMA.sql)** — Full database schema
 - **[PRD v4.0](./docs/product/Deeldesk_PRD_v4_0.docx)** — Product requirements
-- **[Sprint Plan](./docs/planning/SPRINT_PLAN.md)** — Development timeline
+- **[Implementation Plan](./docs/planning/IMPLEMENTATION_PLAN.md)** — Development timeline and execution plan
 
 ---
 
