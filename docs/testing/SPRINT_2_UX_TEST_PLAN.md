@@ -55,11 +55,11 @@ Before testing, ensure:
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | On `/opportunities/[id]/proposals/new` | Form displays with prompt textarea | |
-| 2 | Leave prompt empty, try to submit | Submit button is disabled (min 10 chars) | |
-| 3 | Enter 5 characters | Submit button still disabled | |
-| 4 | Enter 10+ characters | Submit button becomes enabled | |
-| 5 | Click an example prompt | Prompt textarea fills with example text | |
+| 1 | On `/opportunities/[id]/proposals/new` | Form displays with prompt textarea |Pass|
+| 2 | Leave prompt empty, try to submit | Submit button is disabled (min 10 chars) |Pass|
+| 3 | Enter 5 characters | Submit button still disabled |Pass|
+| 4 | Enter 10+ characters | Submit button becomes enabled |Pass|
+| 5 | Click an example prompt | Prompt textarea fills with example text |Pass|
 
 **Notes:** _______________
 
@@ -77,10 +77,10 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | Enter the test prompt above | Text appears in textarea | |
-| 2 | Click "Generate Proposal" | Button shows "Starting Generation..." | |
-| 3 | Wait for redirect | Redirects to `/proposals/[id]` | |
-| 4 | Observe progress UI | Progress component displays | |
+| 1 | Enter the test prompt above | Text appears in textarea |Pass|
+| 2 | Click "Generate Proposal" | Button shows "Starting Generation..." |Pass|
+| 3 | Wait for redirect | Redirects to `/proposals/[id]` |Pass|
+| 4 | Observe progress UI | Progress component displays |Pass|
 
 **Notes:** _______________
 
@@ -92,11 +92,11 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | After submitting proposal | "Queued" state shows briefly | |
-| 2 | Wait 1-2 seconds | "Understanding your request..." displays | |
-| 3 | Wait 2-3 seconds | "Crafting your proposal..." displays | |
-| 4 | Wait for generation | "Generating slides..." with progress | |
-| 5 | Generation completes | Progress reaches 100%, viewer loads | |
+| 1 | After submitting proposal | "Queued" state shows briefly |Pass|
+| 2 | Wait 1-2 seconds | "Understanding your request..." displays |Pass|
+| 3 | Wait 2-3 seconds | "Crafting your proposal..." displays |Pass|
+| 4 | Wait for generation | "Generating slides..." with progress |Pass|
+| 5 | Generation completes | Progress reaches 100%, viewer loads |Pass|
 
 **Expected Progress Flow:**
 - [ ] Queued → Understanding → Crafting → Generating → Complete
@@ -111,13 +111,13 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | After generation completes | Proposal viewer loads | |
-| 2 | Check slide count | At least 5 slides generated | |
-| 3 | Verify Title slide (1) | Contains heading and subheading | |
-| 4 | Verify Executive Summary (2) | Contains bullet points | |
-| 5 | Verify Solution slide (3) | Contains body text or bullets | |
-| 6 | Verify Investment slide (4) | Contains pricing info or [ENTER VALUE] | |
-| 7 | Verify Next Steps slide (5) | Contains action items | |
+| 1 | After generation completes | Proposal viewer loads |Pass |
+| 2 | Check slide count | At least 5 slides generated | Pass|
+| 3 | Verify Title slide (1) | Contains heading and subheading |Pass |
+| 4 | Verify Executive Summary (2) | Contains bullet points |Pass |
+| 5 | Verify Solution slide (3) | Contains body text or bullets |Pass |
+| 6 | Verify Investment slide (4) | Contains pricing info or [ENTER VALUE] |Pass|
+| 7 | Verify Next Steps slide (5) | Contains action items |Pass|
 
 **Notes:** _______________
 
@@ -129,12 +129,12 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | On proposal viewer | First slide (Title) is shown | |
-| 2 | Click "Next" button | Advances to slide 2 | |
-| 3 | Click thumbnail for slide 4 | Jumps to slide 4 | |
-| 4 | Click "Previous" button | Goes back to slide 3 | |
-| 5 | On first slide, click "Previous" | Button disabled or no action | |
-| 6 | On last slide, click "Next" | Button disabled or no action | |
+| 1 | On proposal viewer | First slide (Title) is shown |Pass|
+| 2 | Click "Next" button | Advances to slide 2 |Pass|
+| 3 | Click thumbnail for slide 4 | Jumps to slide 4 |Pass|
+| 4 | Click "Previous" button | Goes back to slide 3 |Pass|
+| 5 | On first slide, click "Previous" | Button disabled or no action |Pass|
+| 6 | On last slide, click "Next" | Button disabled or no action |Pass|
 
 **Notes:** _______________
 
@@ -146,11 +146,11 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | Note current proposal version | Version displayed (e.g., "v1") | |
-| 2 | Click "Create New Version" | Navigates to generation form | |
-| 3 | Enter a new prompt | Prompt accepted | |
-| 4 | Submit and wait for generation | New proposal generates | |
-| 5 | Check version number | Version is incremented (e.g., "v2") | |
+| 1 | Note current proposal version | Version displayed (e.g., "v1") |Pass|
+| 2 | Click "Create New Version" | Navigates to generation form |Pass|
+| 3 | Enter a new prompt | Prompt accepted |Pass|
+| 4 | Submit and wait for generation | New proposal generates |Pass|
+| 5 | Check version number | Version is incremented (e.g., "v2") |Pass|
 
 **Notes:** _______________
 
@@ -162,11 +162,11 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | Navigate to `/opportunities/[id]/proposals` | Proposals list displays | |
-| 2 | Check proposal cards | Shows version, status, date | |
-| 3 | Verify status badges | Correct colors for each status | |
-| 4 | Click "View Proposal" on complete one | Opens proposal viewer | |
-| 5 | Verify breadcrumb | Shows opportunity name | |
+| 1 | Navigate to `/opportunities/[id]/proposals` | Proposals list displays |pass|
+| 2 | Check proposal cards | Shows version, status, date |fail no date shown|
+| 3 | Verify status badges | Correct colors for each status |pass|
+| 4 | Click "View Proposal" on complete one | Opens proposal viewer |pass|
+| 5 | Verify breadcrumb | Shows opportunity name |pass|
 
 **Status Badge Colors:**
 - Draft: Gray
@@ -187,11 +187,11 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | Submit proposal with invalid API key | Generation starts | |
-| 2 | Wait for error | Error state displays | |
-| 3 | Check error UI | Shows "Generation Failed" message | |
-| 4 | Verify action buttons | "Go Back" and "Try Again" present | |
-| 5 | Click "Try Again" | Navigates to generation form | |
+| 1 | Submit proposal with invalid API key | Generation starts |pass|
+| 2 | Wait for error | Error state displays |pass|
+| 3 | Check error UI | Shows "Generation Failed" message |pass|
+| 4 | Verify action buttons | "Go Back" and "Try Again" present |pass|
+| 5 | Click "Try Again" | Navigates to generation form |pass|
 
 **Notes:** _______________
 
@@ -207,8 +207,8 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | Generate proposal for this opportunity | Generation completes | |
-| 2 | Check Title slide | Mentions "TechCorp" or opportunity name | |
+| 1 | Generate proposal for this opportunity | Generation completes |pass|
+| 2 | Check Title slide | Mentions "TechCorp" or opportunity name |pass|
 | 3 | Check content slides | References deal details | |
 | 4 | Verify no hallucinated prices | Uses [ENTER VALUE] for unknown prices | |
 
