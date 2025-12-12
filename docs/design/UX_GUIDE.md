@@ -359,13 +359,17 @@ Build React components using these patterns. Consider **shadcn/ui** as a base.
 ## File Structure
 
 ```
-Wireframes/
-├── DESIGN_SYSTEM.md          # Complete design system
-├── UX_GUIDE.md              # This file
-├── responsive-design.html   # Main interactive wireframe
-├── key-screens.html         # Additional screens
-├── deeldesk-preview.html    # Legacy wireframe
-└── [SVG files]              # Visual mockups
+docs/
+├── design/
+│   ├── DESIGN_SYSTEM.md          # Complete design system
+│   ├── NAVIGATION_SYSTEM.md      # Navigation architecture & patterns
+│   ├── BRANDING_KNOWLEDGE_BASE.md # Branding integration spec
+│   ├── POTX_BRANDING_ANALYSIS.md # POTX feasibility analysis
+│   └── UX_GUIDE.md               # This file
+└── wireframes/
+    ├── responsive-design.html    # Main interactive wireframe
+    ├── key-screens.html          # Additional screens
+    └── navigation-demo.html      # Navigation system demo
 ```
 
 ---
@@ -385,7 +389,7 @@ Wireframes/
 For design questions or feedback, refer to:
 - **Design System** - `DESIGN_SYSTEM.md`
 - **Implementation Plan** - `../IMPLEMENTATION_PLAN.md`
-- **Sprint Plan** - `../Deeldesk_Sprint_Plan_Phase0_MVP.md`
+- **Sprint Plan** - `../planning/SPRINT_PLAN.md`
 
 ---
 

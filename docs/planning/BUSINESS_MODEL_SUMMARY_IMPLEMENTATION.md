@@ -8,7 +8,7 @@
 
 ## Overview
 
-This plan implements an AI-generated business model summary for the user's own organization, stored in `organizations.settings` JSONB and accessible via the Knowledge Base section. The summary provides persistent company-level context for all proposal generations.
+This plan implements an AI-generated **Company Profile** (business model summary) for the user's own organization, stored in the dedicated `company_profiles` table and accessible via the Knowledge Base section. The company profile provides persistent organization-level context for all proposal generations.
 
 ---
 
@@ -184,26 +184,26 @@ export async function generateBusinessModelSummary(
 ---
 
 #### Task 1.3: API Endpoints
-**Files:** `app/api/knowledge/business-model/route.ts` (new)  
+**Files:** `app/api/knowledge/company-profile/route.ts` (new)  
 **Points:** 2
 
 **Endpoints:**
 
 ```typescript
-// GET /api/knowledge/business-model
-// Returns current business model summary for organization
+// GET /api/knowledge/company-profile
+// Returns current company profile for organization
 
-// POST /api/knowledge/business-model/generate
-// Triggers AI generation, returns summary
+// POST /api/knowledge/company-profile/generate
+// Triggers AI generation, returns company profile
 
-// PUT /api/knowledge/business-model
-// Updates business model summary (user edits)
-// Body: { summary: string, is_verified?: boolean }
+// PUT /api/knowledge/company-profile
+// Updates company profile (user edits)
+// Body: { summary: string, companyOverview?: string, ... , isVerified?: boolean }
 ```
 
 **Files to create:**
-- `app/api/knowledge/business-model/route.ts`
-- `app/api/knowledge/business-model/generate/route.ts`
+- `app/api/knowledge/company-profile/route.ts`
+- `app/api/knowledge/company-profile/generate/route.ts`
 
 **Files to modify:**
 - `lib/db/queries/organizations.ts` - Add helper functions for updating settings

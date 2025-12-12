@@ -608,7 +608,7 @@ npm run format           # Format with Prettier
 
 ## References
 
-- [PRD v4.0](./docs/docs/product/Deeldesk_PRD_v4_0.docx) - Full product requirements
-- [Sprint Plan](./docs/docs/planning/SPRINT_PLAN.md) - Development timeline
+- [PRD v4.0](./docs/product/Deeldesk_PRD_v4_0.docx) - Full product requirements
+- [Sprint Plan](./docs/planning/SPRINT_PLAN.md) - Development timeline
 - [Database Schema](./docs/architecture/DATABASE_SCHEMA.sql) - Full schema with comments
 - [LLM Provider Architecture](./docs/architecture/LLM_PROVIDER_ARCHITECTURE.md) - Multi-provider design for data sovereignty

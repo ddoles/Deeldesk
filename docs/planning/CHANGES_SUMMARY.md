@@ -11,16 +11,16 @@
 2. **PROPOSAL_VERSIONING_MVP.md** - Proposal versioning and active proposal strategy
 
 ### Design & UX Documents
-3. **Wireframes/DESIGN_SYSTEM.md** - Complete design system with tokens, components, patterns
-4. **Wireframes/NAVIGATION_SYSTEM.md** - Navigation architecture and patterns
-5. **Wireframes/UX_GUIDE.md** - UX guide for Phase 0 and MVP
-6. **Wireframes/BRANDING_KNOWLEDGE_BASE.md** - Corporate branding integration in KB
-7. **Wireframes/POTX_BRANDING_ANALYSIS.md** - POTX template upload feasibility analysis
+3. **docs/design/DESIGN_SYSTEM.md** - Complete design system with tokens, components, patterns
+4. **docs/design/NAVIGATION_SYSTEM.md** - Navigation architecture and patterns
+5. **docs/design/UX_GUIDE.md** - UX guide for Phase 0 and MVP
+6. **docs/design/BRANDING_KNOWLEDGE_BASE.md** - Corporate branding integration in KB
+7. **docs/design/POTX_BRANDING_ANALYSIS.md** - POTX template upload feasibility analysis
 
 ### Interactive Wireframes
-8. **Wireframes/responsive-design.html** - Main responsive UX wireframe
-9. **Wireframes/key-screens.html** - Additional key screens (KB, Settings, etc.)
-10. **Wireframes/navigation-demo.html** - Navigation system demo
+8. **docs/wireframes/responsive-design.html** - Main responsive UX wireframe
+9. **docs/wireframes/key-screens.html** - Additional key screens (KB, Settings, etc.)
+10. **docs/wireframes/navigation-demo.html** - Navigation system demo
 
 ---
 
@@ -147,18 +147,21 @@
 
 ```
 /Users/dandoles/Projects/Deeldesk/
-├── IMPLEMENTATION_PLAN.md (updated)
-├── Deeldesk_Sprint_Plan_Phase0_MVP.md (updated)
-├── PROPOSAL_VERSIONING_MVP.md (new)
-└── Wireframes/
-    ├── DESIGN_SYSTEM.md (updated)
-    ├── NAVIGATION_SYSTEM.md (new)
-    ├── UX_GUIDE.md (new)
-    ├── BRANDING_KNOWLEDGE_BASE.md (new)
-    ├── POTX_BRANDING_ANALYSIS.md (new)
-    ├── responsive-design.html (new)
-    ├── key-screens.html (new)
-    └── navigation-demo.html (new)
+├── docs/
+│   ├── planning/
+│   │   ├── IMPLEMENTATION_PLAN.md
+│   │   ├── SPRINT_PLAN.md
+│   │   └── CHANGES_SUMMARY.md
+│   ├── design/
+│   │   ├── DESIGN_SYSTEM.md
+│   │   ├── NAVIGATION_SYSTEM.md
+│   │   ├── UX_GUIDE.md
+│   │   ├── BRANDING_KNOWLEDGE_BASE.md
+│   │   └── POTX_BRANDING_ANALYSIS.md
+│   └── wireframes/
+│       ├── responsive-design.html
+│       ├── key-screens.html
+│       └── navigation-demo.html
 ```
 
 ---

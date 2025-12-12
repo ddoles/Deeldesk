@@ -113,8 +113,9 @@ Instead of manually configuring brand colors, fonts, and logos, users could uplo
 1. User uploads POTX file
 2. Extract ZIP contents
 3. Parse XML files to extract branding
-4. Store extracted values in `organizations.settings`
-5. Use stored values for proposal generation
+4. Store extracted values in the dedicated `brand_settings` table
+5. Store extracted logo (if any) in S3 (or S3-compatible storage), reference via `brand_settings.logo_url`
+6. Use stored values for proposal generation
 
 **Pros:**
 - One-time extraction
@@ -306,26 +307,34 @@ export async function POST(request: NextRequest) {
     );
   }
   
-  // Update organization settings
-  const org = await prisma.organization.update({
-    where: { id: session.organizationId },
-    data: {
-      settings: {
-        ...org.settings,
-        brand_colors: {
-          primary: branding.colors.primary,
-          secondary: branding.colors.secondary,
-          accent: branding.colors.accent,
-        },
-        brand_fonts: {
-          heading: branding.fonts.heading,
-          body: branding.fonts.body,
-        },
-        logo_url: logoUrl,
-        template_source: 'potx_upload',
-        template_uploaded_at: new Date().toISOString(),
-      }
-    }
+  // Upsert into dedicated brand_settings table
+  await prisma.brandSettings.upsert({
+    where: { organizationId: session.organizationId },
+    create: {
+      organizationId: session.organizationId,
+      primaryColor: branding.colors.primary,
+      secondaryColor: branding.colors.secondary,
+      accentColor: branding.colors.accent,
+      fontHeading: branding.fonts.heading,
+      fontBody: branding.fonts.body,
+      logoUrl,
+      additionalGuidelines: {
+        templateSource: 'potx_upload',
+        templateUploadedAt: new Date().toISOString(),
+      },
+    },
+    update: {
+      primaryColor: branding.colors.primary,
+      secondaryColor: branding.colors.secondary,
+      accentColor: branding.colors.accent,
+      fontHeading: branding.fonts.heading,
+      fontBody: branding.fonts.body,
+      logoUrl,
+      additionalGuidelines: {
+        templateSource: 'potx_upload',
+        templateUploadedAt: new Date().toISOString(),
+      },
+    },
   });
   
   return NextResponse.json({
@@ -352,7 +361,7 @@ export async function generatePPTX(
   organizationId: string
 ): Promise<Buffer> {
   const org = await getOrganization(organizationId);
-  const settings = org.settings as OrganizationSettings;
+  const brandSettings = await prisma.brandSettings.findUnique({ where: { organizationId } });
   
   const pptx = new PptxGenJS();
   
@@ -368,12 +377,12 @@ export async function generatePPTX(
   // Set theme colors
   pptx.defineSlideMaster({
     title: 'MASTER_SLIDE',
-    background: { color: settings.brand_colors.background },
+    background: { color: '#FFFFFF' }, // or a computed background from brand/theme extraction
     objects: [
       {
         // Logo
         image: {
-          path: settings.logo_url,
+          path: brandSettings?.logoUrl,
           x: 0.5,
           y: 0.2,
           w: 1.5,
@@ -385,8 +394,8 @@ export async function generatePPTX(
   
   // Set fonts
   pptx.fontFace = {
-    body: settings.brand_fonts.body,
-    heading: settings.brand_fonts.heading,
+    body: brandSettings?.fontBody ?? 'Arial',
+    heading: brandSettings?.fontHeading ?? 'Arial',
   };
   
   // Generate slides...
