@@ -93,6 +93,8 @@ deeldesk/
 ├── prisma/
 │   ├── schema.prisma      # Database schema (includes brand_settings, company_profiles)
 │   └── migrations/        # Migration history
+├── scripts/
+│   └── start-worker.ts    # BullMQ worker startup script
 ├── workers/
 │   └── generation.ts      # BullMQ worker for proposals
 ├── types/                 # TypeScript type definitions
@@ -503,26 +505,45 @@ export async function GET(
   { params }: { params: { jobId: string } }
 ) {
   const encoder = new TextEncoder();
-  
+
   const stream = new ReadableStream({
     async start(controller) {
+      // Track closed state to prevent "controller already closed" errors
+      let isClosed = false;
+
       const sendEvent = (event: StreamEvent) => {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
-        );
+        if (isClosed) return;
+        try {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
+          );
+        } catch {
+          isClosed = true;
+        }
+      };
+
+      const closeController = () => {
+        if (isClosed) return;
+        isClosed = true;
+        try {
+          controller.close();
+        } catch {
+          // Already closed
+        }
       };
 
       // Subscribe to job progress
       const subscription = await subscribeToJob(params.jobId);
-      
+
       for await (const update of subscription) {
+        if (isClosed) break;
         sendEvent(update);
         if (update.status === 'complete' || update.status === 'error') {
           break;
         }
       }
-      
-      controller.close();
+
+      closeController();
     }
   });
 
@@ -643,6 +664,7 @@ AWS_SECRET_ACCESS_KEY=...
 ```bash
 # Development
 npm run dev              # Start dev server
+npm run worker           # Start BullMQ proposal worker (run in separate terminal)
 npm run db:push          # Push schema changes
 npm run db:migrate       # Run migrations
 npm run db:studio        # Open Prisma Studio
@@ -662,10 +684,19 @@ npm run typecheck        # Run TypeScript compiler
 npm run format           # Format with Prettier
 ```
 
+## Current Status
+
+**Sprint 2 (Core Generation)**: Complete - UX tested and validated
+- Proposal generation with BullMQ + Redis
+- SSE streaming for real-time progress
+- Context Assembly Engine (basic)
+- Slide viewer with navigation
+
 ## References
 
 - [PRD v4.0](./docs/product/Deeldesk_PRD_v4_0.docx) - Full product requirements
 - [Implementation Plan](./docs/planning/IMPLEMENTATION_PLAN.md) - Development timeline and execution plan
+- [Sprint 2 UX Test Plan](./docs/testing/SPRINT_2_UX_TEST_PLAN.md) - Core generation test cases (all passed)
 - [Database Schema](./docs/architecture/DATABASE_SCHEMA.sql) - Full schema with comments
 - [LLM Provider Architecture](./docs/architecture/LLM_PROVIDER_ARCHITECTURE.md) - Multi-provider design for data sovereignty
 - [Spike Findings](./spikes/SPIKE_FINDINGS.md) - Phase 0 technical validation results
