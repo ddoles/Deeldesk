@@ -15,9 +15,9 @@ import { GeneratedBy, ConfidenceLevel } from '@prisma/client';
 // ============================================
 
 const generateSchema = z.object({
-  companyName: z.string().min(1).max(255).optional(),
+  companyName: z.string().max(255).optional().or(z.literal('')),
   website: z.string().url().optional().or(z.literal('')),
-  industry: z.string().max(100).optional(),
+  industry: z.string().max(100).optional().or(z.literal('')),
   additionalContext: z.string().max(5000).optional(),
 });
 
@@ -128,8 +128,11 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Error generating company profile:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate company profile';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Error stack:', errorStack);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to generate company profile' },
+      { error: errorMessage, stack: process.env.NODE_ENV === 'development' ? errorStack : undefined },
       { status: 500 }
     );
   }

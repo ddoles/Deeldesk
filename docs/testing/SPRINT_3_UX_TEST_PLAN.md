@@ -44,10 +44,10 @@ Before testing, ensure:
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | Log in to dashboard | Dashboard loads | |
-| 2 | Look for "Knowledge Base" in sidebar | Knowledge Base menu item visible | |
-| 3 | Click "Knowledge Base" | Navigates to `/knowledge` | |
-| 4 | Check default tab | Redirects to `/knowledge/products` | |
+| 1 | Log in to dashboard | Dashboard loads |Pass|
+| 2 | Look for "Knowledge Base" in sidebar | Knowledge Base menu item visible |Pass|
+| 3 | Click "Knowledge Base" | Navigates to `/knowledge` |Pass|
+| 4 | Check default tab | Redirects to `/knowledge/products` |Pass|
 
 **Notes:** _______________
 
