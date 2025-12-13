@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ExtractedProduct } from '@/lib/ai/extraction-prompts';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
 interface BulkProductImportModalProps {
   open: boolean;
@@ -142,70 +141,76 @@ export function BulkProductImportModal({
           </label>
         </div>
 
-        {/* Product List */}
-        <div className="flex-1 overflow-y-auto p-4 min-h-0">
-          <div className="space-y-3">
-            {products.map((product, index) => (
-              <div
-                key={index}
-                className={`p-3 border rounded-lg transition-colors cursor-pointer ${
-                  selectedIndices.has(index)
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => toggleSelection(index)}
-              >
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedIndices.has(index)}
-                    onChange={() => toggleSelection(index)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="mt-1 rounded border-gray-300"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium">
-                        {product.name || 'Unnamed Product'}
-                      </span>
-                      {product.category && (
-                        <Badge variant="secondary" className="text-xs">
-                          {product.category}
-                        </Badge>
-                      )}
-                      {formatPrice(product) && (
-                        <Badge variant="outline" className="text-xs">
-                          {formatPrice(product)}
-                        </Badge>
-                      )}
+        {/* Product List - Table Style */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <table className="w-full">
+            <thead className="bg-gray-50 sticky top-0">
+              <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 w-10"></th>
+                <th className="px-4 py-3">Product</th>
+                <th className="px-4 py-3">Price</th>
+                <th className="px-4 py-3 hidden sm:table-cell">Features</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {products.map((product, index) => (
+                <tr
+                  key={index}
+                  className={`cursor-pointer transition-colors ${
+                    selectedIndices.has(index)
+                      ? 'bg-blue-50'
+                      : 'hover:bg-gray-50'
+                  }`}
+                  onClick={() => toggleSelection(index)}
+                >
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIndices.has(index)}
+                      onChange={() => toggleSelection(index)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded border-gray-300"
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-gray-900">
+                      {product.name || 'Unnamed Product'}
                     </div>
                     {product.description && (
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                      <div className="text-sm text-gray-500 line-clamp-1">
                         {product.description}
-                      </p>
-                    )}
-                    {product.features && product.features.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {product.features.slice(0, 3).map((feature, fi) => (
-                          <span
-                            key={fi}
-                            className="inline-flex px-2 py-0.5 text-xs bg-gray-100 rounded"
-                          >
-                            {feature}
-                          </span>
-                        ))}
-                        {product.features.length > 3 && (
-                          <span className="inline-flex px-2 py-0.5 text-xs bg-gray-100 rounded">
-                            +{product.features.length - 3} more
-                          </span>
-                        )}
                       </div>
                     )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {formatPrice(product) ? (
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {product.currency || 'USD'} {product.basePrice}
+                        </div>
+                        {product.billingFrequency && (
+                          <div className="text-xs text-gray-500">
+                            per {product.billingFrequency}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    {product.features && product.features.length > 0 ? (
+                      <div className="text-sm text-gray-500">
+                        {product.features.length} feature{product.features.length !== 1 ? 's' : ''}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {/* Footer */}
