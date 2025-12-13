@@ -3,12 +3,12 @@
 **Based on:** Sprint Plan Phase 0 MVP v1.2
 **Created:** December 2025
 **Last Updated:** December 12, 2025
-**Status:** Sprint 1 Complete - Proceeding to Sprint 2
+**Status:** Sprint 3 Complete - Proceeding to Sprint 4
 **Note:** This is the consolidated execution plan. Historical spike documentation archived in `archive/SPRINT_PLAN.md`.
 
 ---
 
-## Current Status: Sprint 1 Complete ✅
+## Current Status: Sprint 3 Complete ✅
 
 **Updated December 12, 2025**
 
@@ -91,7 +91,8 @@ Continue MVP Development:
 1. ~~Phase 0 Spikes~~ ✅ Complete
 2. ~~Sprint 1: Foundation~~ ✅ Complete
 3. ~~Sprint 2: Core Generation~~ ✅ Complete
-4. **Sprint 3:** Context & Knowledge Base
+4. ~~Sprint 3: Context & Knowledge Base~~ ✅ Complete
+5. **Sprint 4:** Pricing Engine + Brand Features
 
 ---
 
@@ -479,65 +480,85 @@ All test cases from `docs/testing/SPRINT_2_UX_TEST_PLAN.md` passed:
 
 ---
 
-## Sprint 3: Context & Knowledge Base (Weeks 5-6)
+## Sprint 3: Context & Knowledge Base (Weeks 5-6) ✅ COMPLETE
 
 **Theme:** Build the knowledge foundation
+**Status:** COMPLETE (December 12, 2025)
 
 ### Goals
-- Implement deal context paste/drag input
-- Build knowledge base (products, battlecards)
-- Implement RAG indexing and retrieval
-- Enhance Context Assembly with KB content
-- Add organization business model summary (AI-generated, user-editable)
+- ✅ Implement deal context paste/drag input
+- ✅ Build knowledge base (products, battlecards)
+- ✅ Implement RAG indexing and retrieval
+- ✅ Enhance Context Assembly with KB content
+- ✅ Add organization business model summary (AI-generated, user-editable)
 
 ### User Stories (33 points)
 
-| ID | Story | Points | Owner |
-|----|-------|--------|-------|
-| S3-001 | Paste deal context (emails, notes) before generating | 5 | Eng 2 |
-| S3-002 | Add products to knowledge base | 5 | Eng 1 |
-| S3-003 | Add competitor battlecards (paste/upload) | 5 | Eng 1 |
-| S3-004 | Query knowledge base with natural language | 8 | Eng 1 |
-| S3-005 | Proposals include relevant KB content automatically | 5 | Eng 1 |
-| S3-006 | Generate and edit organization business model summary | 5 | Eng 2 |
+| ID | Story | Points | Status |
+|----|-------|--------|--------|
+| S3-001 | Paste deal context (emails, notes) before generating | 5 | ✅ |
+| S3-002 | Add products to knowledge base | 5 | ✅ |
+| S3-003 | Add competitor battlecards (paste/upload) | 5 | ✅ |
+| S3-004 | Query knowledge base with natural language | 8 | ⏭️ Deferred |
+| S3-005 | Proposals include relevant KB content automatically | 5 | ✅ |
+| S3-006 | Generate and edit organization business model summary | 5 | ✅ |
 
 ### Technical Tasks (60 points)
 
 > **NOTE**: Includes BedrockProvider tasks moved from Sprint 2. Brand features moved to Sprint 4.
 
-| ID | Task | Points | Owner |
-|----|------|--------|-------|
-| T3-001 | Implement Deal Context entity schema | 3 | Eng 1 |
-| T3-002 | Build deal context input UI (paste/drag) | 5 | Eng 2 |
-| T3-003 | Implement Product entity with vector embedding | 5 | Eng 1 |
-| T3-004 | Implement Battlecard entity with vector embedding | 5 | Eng 1 |
-| T3-005 | Build embedding generation pipeline | 5 | Eng 1 |
-| T3-006 | Implement hybrid search (vector + structured) | 8 | Eng 1 |
-| T3-007 | Build knowledge base management UI | 5 | Eng 2 |
-| T3-008 | Enhance Context Assembly with KB retrieval | 5 | Eng 1 |
-| T3-009 | Build conversational KB query interface | 5 | Eng 2 |
+| ID | Task | Points | Status |
+|----|------|--------|--------|
+| T3-001 | Implement Deal Context entity schema | 3 | ✅ |
+| T3-002 | Build deal context input UI (paste/drag) | 5 | ✅ |
+| T3-003 | Implement Product entity with vector embedding | 5 | ✅ |
+| T3-004 | Implement Battlecard entity with vector embedding | 5 | ✅ |
+| T3-005 | Build embedding generation pipeline | 5 | ✅ |
+| T3-006 | Implement hybrid search (vector + structured) | 8 | ✅ |
+| T3-007 | Build knowledge base management UI | 5 | ✅ |
+| T3-008 | Enhance Context Assembly with KB retrieval | 5 | ✅ |
+| T3-009 | Build conversational KB query interface | 5 | ⏭️ Deferred |
 | T3-010 | ~~Add brand preview panel to product editor~~ | ~~3~~ | **MOVED TO SPRINT 4** |
 | T3-011 | ~~Integrate brand context into Context Assembly Engine~~ | ~~5~~ | **MOVED TO SPRINT 4** |
 | T3-012 | ~~Add brand guidelines page to KB section~~ | ~~3~~ | **MOVED TO SPRINT 4** |
-| T3-013 | Implement business model generator service (LLM + web search) | 5 | Eng 1 |
-| T3-014 | Build business model API endpoints (GET, POST generate, PUT) | 2 | Eng 1 |
-| T3-015 | Create company profile page in Knowledge Base | 4 | Eng 2 |
-| T3-016 | Integrate business model into context assembly | 3 | Eng 1 |
-| T3-017 | **Implement BedrockProvider with streaming** (from Sprint 2) | 8 | Eng 1 |
-| T3-018 | **Add LLM provider selection to org settings** (from Sprint 2) | 3 | Eng 2 |
+| T3-013 | Implement business model generator service (LLM + web search) | 5 | ✅ |
+| T3-014 | Build business model API endpoints (GET, POST generate, PUT) | 2 | ✅ |
+| T3-015 | Create company profile page in Knowledge Base | 4 | ✅ |
+| T3-016 | Integrate business model into context assembly | 3 | ✅ |
+| T3-017 | **Implement BedrockProvider with streaming** (from Sprint 2) | 8 | ✅ |
+| T3-018 | **Add LLM provider selection to org settings** (from Sprint 2) | 3 | ✅ |
+
+### Key Files Implemented
+- `lib/ai/embeddings.ts` - OpenAI embeddings with vector search
+- `lib/ai/providers/bedrock.ts` - AWS Bedrock provider with streaming
+- `lib/ai/provider-factory.ts` - Updated with Bedrock provider
+- `lib/ai/business-model-generator.ts` - AI company profile generation
+- `lib/ai/context-assembly.ts` - Enhanced with RAG retrieval
+- `app/(dashboard)/knowledge/layout.tsx` - KB navigation with tabs
+- `app/(dashboard)/knowledge/products/*` - Products CRUD pages
+- `app/(dashboard)/knowledge/battlecards/*` - Battlecards CRUD pages
+- `app/(dashboard)/knowledge/company-profile/*` - Company profile with AI generation
+- `app/(dashboard)/opportunities/[id]/context/new/page.tsx` - Deal context input UI
+- `app/api/v1/knowledge/products/*` - Products API with embeddings
+- `app/api/v1/knowledge/battlecards/*` - Battlecards API with embeddings
+- `app/api/v1/knowledge/company-profile/*` - Company profile API
+- `app/api/v1/opportunities/[id]/context/*` - Deal context API
+- `components/knowledge/product-form.tsx` - Product form component
+- `components/knowledge/battlecard-form.tsx` - Battlecard form component
+- `app/(dashboard)/settings/org-settings-form.tsx` - LLM provider selection UI
 
 ### Acceptance Criteria
-- [ ] User can paste deal context and see it reflected in proposal
-- [ ] User can add products and battlecards to KB
-- [ ] KB content automatically retrieved for relevant proposals
-- [ ] User can query KB with natural language and get cited answers
-- [ ] Vector search returns relevant results in <2 seconds
-- [ ] User can generate business model summary via AI (on-demand)
-- [ ] User can edit and save business model summary
-- [ ] Business model summary included in all proposal generations when available
-- [ ] Company profile accessible from Knowledge Base navigation
-- [ ] **Proposals generate correctly via both Anthropic API and AWS Bedrock**
-- [ ] **Organization can be configured to use Bedrock provider**
+- [x] User can paste deal context and see it reflected in proposal
+- [x] User can add products and battlecards to KB
+- [x] KB content automatically retrieved for relevant proposals
+- [ ] User can query KB with natural language and get cited answers (Deferred)
+- [x] Vector search returns relevant results in <2 seconds
+- [x] User can generate business model summary via AI (on-demand)
+- [x] User can edit and save business model summary
+- [x] Business model summary included in all proposal generations when available
+- [x] Company profile accessible from Knowledge Base navigation
+- [x] **Proposals generate correctly via both Anthropic API and AWS Bedrock**
+- [x] **Organization can be configured to use Bedrock provider**
 
 ---
 

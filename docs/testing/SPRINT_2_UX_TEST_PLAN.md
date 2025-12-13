@@ -163,7 +163,7 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
 | 1 | Navigate to `/opportunities/[id]/proposals` | Proposals list displays |pass|
-| 2 | Check proposal cards | Shows version, status, date |fail no date shown|
+| 2 | Check proposal cards | Shows version, status, date |pass version and status; fail no date shown|
 | 3 | Verify status badges | Correct colors for each status |pass|
 | 4 | Click "View Proposal" on complete one | Opens proposal viewer |pass|
 | 5 | Verify breadcrumb | Shows opportunity name |pass|
@@ -209,8 +209,8 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 |------|--------|-----------------|-----------|
 | 1 | Generate proposal for this opportunity | Generation completes |pass|
 | 2 | Check Title slide | Mentions "TechCorp" or opportunity name |pass|
-| 3 | Check content slides | References deal details | |
-| 4 | Verify no hallucinated prices | Uses [ENTER VALUE] for unknown prices | |
+| 3 | Check content slides | References deal details |pass|
+| 4 | Verify no hallucinated prices | Uses [ENTER VALUE] for unknown prices |pass|
 
 **Notes:** _______________
 
@@ -222,10 +222,10 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | Generate proposal with unique prompt | Generation completes | |
-| 2 | View completed proposal | Scroll to bottom | |
-| 3 | Find "Generation Prompt" section | Prompt card is visible | |
-| 4 | Verify prompt text | Matches what was entered | |
+| 1 | Generate proposal with unique prompt | Generation completes |pass|
+| 2 | View completed proposal | Scroll to bottom |pass|
+| 3 | Find "Generation Prompt" section | Prompt card is visible |pass|
+| 4 | Verify prompt text | Matches what was entered |pass|
 
 **Notes:** _______________
 
@@ -237,11 +237,11 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | Open two browser tabs | Both on different opportunities | |
-| 2 | Start generation in Tab 1 | Progress shows | |
-| 3 | Start generation in Tab 2 | Progress shows independently | |
-| 4 | Wait for both to complete | Both complete successfully | |
-| 5 | Verify correct slides in each | Each has appropriate content | |
+| 1 | Open two browser tabs | Both on different opportunities |pass|
+| 2 | Start generation in Tab 1 | Progress shows |pass|
+| 3 | Start generation in Tab 2 | Progress shows independently |Pass|
+| 4 | Wait for both to complete | Both complete successfully |Pass|
+| 5 | Verify correct slides in each | Each has appropriate content |Pass|
 
 **Notes:** _______________
 

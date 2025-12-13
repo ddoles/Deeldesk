@@ -5,6 +5,10 @@ import { prisma } from '@/lib/db/prisma';
 
 const updateOrgSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255).optional(),
+  settings: z.object({
+    llmProvider: z.enum(['anthropic-direct', 'aws-bedrock']).optional(),
+    safeModeDefault: z.boolean().optional(),
+  }).optional(),
 });
 
 // GET /api/v1/organizations/current - Get current organization
@@ -52,9 +56,30 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const validated = updateOrgSchema.parse(body);
 
+    // Prepare update data
+    const updateData: Record<string, unknown> = {};
+
+    if (validated.name) {
+      updateData.name = validated.name;
+    }
+
+    // Merge settings with existing settings
+    if (validated.settings) {
+      const existingOrg = await prisma.organization.findUnique({
+        where: { id: session.user.organizationId },
+        select: { settings: true },
+      });
+
+      const existingSettings = (existingOrg?.settings as Record<string, unknown>) || {};
+      updateData.settings = {
+        ...existingSettings,
+        ...validated.settings,
+      };
+    }
+
     const organization = await prisma.organization.update({
       where: { id: session.user.organizationId },
-      data: validated,
+      data: updateData,
     });
 
     return NextResponse.json(organization);

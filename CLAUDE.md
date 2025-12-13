@@ -686,10 +686,18 @@ npm run format           # Format with Prettier
 
 ## Current Status
 
+**Sprint 3 (Context & Knowledge Base)**: Complete
+- Knowledge Base with Products and Battlecards CRUD
+- Company Profile with AI generation
+- Deal context input (paste/drag)
+- RAG retrieval with OpenAI embeddings + pgvector
+- AWS Bedrock provider with streaming
+- LLM provider selection in org settings
+
 **Sprint 2 (Core Generation)**: Complete - UX tested and validated
 - Proposal generation with BullMQ + Redis
 - SSE streaming for real-time progress
-- Context Assembly Engine (basic)
+- Context Assembly Engine (enhanced with RAG)
 - Slide viewer with navigation
 
 ## References

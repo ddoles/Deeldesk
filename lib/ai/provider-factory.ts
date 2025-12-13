@@ -12,6 +12,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { LLMProvider, ProviderId } from './types';
 import { AnthropicDirectProvider } from './providers/anthropic';
+import { BedrockProvider } from './providers/bedrock';
 
 // Cache providers to avoid recreating them on every request
 const providerCache = new Map<string, LLMProvider>();
@@ -52,12 +53,16 @@ export async function getProviderForOrganization(
   if (preferredProvider === 'aws-bedrock') {
     // Bedrock requires Team or Enterprise tier
     if (org.planTier === 'team' || org.planTier === 'enterprise') {
-      // BedrockProvider will be implemented in Sprint 3
-      // For now, fall back to Anthropic Direct
-      console.warn(
-        `Bedrock requested for org ${organizationId} but not yet implemented. Using Anthropic Direct.`
-      );
-      provider = new AnthropicDirectProvider();
+      // Check if Bedrock is available
+      const bedrockAvailable = await isProviderAvailable('aws-bedrock');
+      if (bedrockAvailable) {
+        provider = new BedrockProvider();
+      } else {
+        console.warn(
+          `Bedrock requested for org ${organizationId} but AWS credentials not configured. Using Anthropic Direct.`
+        );
+        provider = new AnthropicDirectProvider();
+      }
     } else {
       console.warn(
         `Bedrock requested for org ${organizationId} but plan tier is ${org.planTier}. Using Anthropic Direct.`
@@ -98,8 +103,11 @@ export function createProvider(
       return new AnthropicDirectProvider(options?.apiKey, options?.model);
 
     case 'aws-bedrock':
-      // Will be implemented in Sprint 3
-      throw new Error('BedrockProvider not yet implemented. Coming in Sprint 3.');
+      return new BedrockProvider({
+        accessKeyId: options?.apiKey,
+        region: options?.region,
+        model: options?.model,
+      });
 
     case 'google-vertex':
       // Will be implemented in Phase 3
