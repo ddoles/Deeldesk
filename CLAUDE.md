@@ -17,7 +17,7 @@
 
 | Layer | Technology | Notes |
 |-------|------------|-------|
-| Framework | Next.js 14 (App Router) | Use server components by default |
+| Framework | Next.js 16 (App Router) | Use server components by default |
 | Language | TypeScript | Strict mode enabled |
 | Database | PostgreSQL 16 + pgvector | Row-level security required |
 | ORM | Prisma | With pgvector extension |
@@ -66,6 +66,9 @@ deeldesk/
 │   │   │   ├── admin/          # Platform admin endpoints
 │   │   │   │   ├── users/      # User CRUD (platform admin)
 │   │   │   │   └── memberships/ # Membership role changes
+│   │   │   ├── extract/        # AI content extraction (Vision API)
+│   │   │   │   ├── product/    # Extract product info from images
+│   │   │   │   └── battlecard/ # Extract competitor info from images
 │   │   │   └── knowledge/      # KB management
 │   │   ├── auth/          # NextAuth.js handlers
 │   │   └── debug/         # Debug endpoints (session info)
@@ -80,6 +83,7 @@ deeldesk/
 │   │   ├── anthropic.ts   # Claude client
 │   │   ├── embeddings.ts  # Embedding generation
 │   │   ├── prompts/       # System prompts
+│   │   ├── extraction-prompts.ts # Vision API extraction prompts
 │   │   ├── context.ts     # Context Assembly Engine
 │   │   └── business-model-generator.ts # AI company profile generation
 │   ├── db/                # Database utilities
@@ -557,6 +561,58 @@ export async function GET(
 }
 ```
 
+### 4. AI Content Extraction (Claude Vision)
+
+For Knowledge Base items, use Claude Vision API to extract structured data from screenshots/images:
+
+```typescript
+// app/api/v1/extract/product/route.ts
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic();
+
+export async function POST(request: NextRequest) {
+  const { image } = await request.json(); // Base64 encoded image
+
+  // Extract base64 data and media type
+  const [, mediaType, base64Data] = image.match(/^data:(image\/\w+);base64,(.+)$/);
+
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 1024,
+    system: PRODUCT_EXTRACTION_PROMPT, // Structured extraction prompt
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: mediaType,
+              data: base64Data,
+            },
+          },
+          { type: 'text', text: 'Extract product information. Return JSON.' },
+        ],
+      },
+    ],
+  });
+
+  const extracted = JSON.parse(response.content[0].text);
+  return NextResponse.json({ success: true, data: extracted });
+}
+```
+
+**Key Rules:**
+- Images are processed and discarded (no persistent storage)
+- User reviews extracted data before saving (form pre-fill, not auto-save)
+- Use structured prompts that return JSON matching form schema
+- Return null for fields where information isn't visible
+- Never hallucinate data - only extract what's clearly visible
+
+See [AI Content Extraction Plan](./docs/planning/AI_CONTENT_EXTRACTION_PLAN.md) for full implementation details.
+
 ## Testing Expectations
 
 ### Unit Tests
@@ -686,6 +742,13 @@ npm run format           # Format with Prettier
 
 ## Current Status
 
+**Sprint 3.5 (AI Content Extraction)**: Complete
+- Clipboard paste + Claude Vision extraction for Products and Battlecards
+- Drag-drop image upload for KB item creation
+- Bulk product import from multi-tier pricing screenshots
+- Reduces KB item creation time from 5-10 min to <1 min
+- See [AI Content Extraction Plan](./docs/planning/AI_CONTENT_EXTRACTION_PLAN.md)
+
 **Sprint 3 (Context & Knowledge Base)**: Complete
 - Knowledge Base with Products and Battlecards CRUD
 - Company Profile with AI generation
@@ -704,7 +767,9 @@ npm run format           # Format with Prettier
 
 - [PRD v4.0](./docs/product/Deeldesk_PRD_v4_0.docx) - Full product requirements
 - [Implementation Plan](./docs/planning/IMPLEMENTATION_PLAN.md) - Development timeline and execution plan
+- [AI Content Extraction Plan](./docs/planning/AI_CONTENT_EXTRACTION_PLAN.md) - Claude Vision extraction for KB items
 - [Sprint 2 UX Test Plan](./docs/testing/SPRINT_2_UX_TEST_PLAN.md) - Core generation test cases (all passed)
+- [Sprint 3 UX Test Plan](./docs/testing/SPRINT_3_UX_TEST_PLAN.md) - Context & Knowledge Base test cases
 - [Database Schema](./docs/architecture/DATABASE_SCHEMA.sql) - Full schema with comments
 - [LLM Provider Architecture](./docs/architecture/LLM_PROVIDER_ARCHITECTURE.md) - Multi-provider design for data sovereignty
 - [Spike Findings](./spikes/SPIKE_FINDINGS.md) - Phase 0 technical validation results

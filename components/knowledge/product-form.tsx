@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ImageDropZone } from '@/components/knowledge/image-drop-zone';
+import { BulkProductImportModal } from '@/components/knowledge/bulk-product-import-modal';
+import { ProductExtractionResult, ExtractedProduct } from '@/lib/ai/extraction-prompts';
 
 interface ProductFormData {
   name: string;
@@ -48,6 +51,12 @@ export function ProductForm({ initialData, productId, isEdit = false }: ProductF
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
+  const [extractionSuccess, setExtractionSuccess] = useState(false);
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [extractedProducts, setExtractedProducts] = useState<ExtractedProduct[]>([]);
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
 
   const [formData, setFormData] = useState<ProductFormData>({
     name: initialData?.name || '',
@@ -90,6 +99,112 @@ export function ProductForm({ initialData, productId, isEdit = false }: ProductF
   function removeUseCase(index: number) {
     updateField('useCases', formData.useCases.filter((_, i) => i !== index));
   }
+
+  const handleExtraction = useCallback(async (base64Image: string) => {
+    setIsExtracting(true);
+    setExtractionError(null);
+    setExtractionSuccess(false);
+
+    try {
+      const response = await fetch('/api/v1/extract/product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Image }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to extract product information');
+      }
+
+      if (!result.success) {
+        throw new Error(result.error || 'No product information detected');
+      }
+
+      const data = result.data as ProductExtractionResult;
+      const products = data.products || [];
+
+      if (products.length === 0) {
+        throw new Error('No products found in the image');
+      }
+
+      // Multiple products - show bulk import modal
+      if (products.length > 1) {
+        setExtractedProducts(products);
+        setBulkModalOpen(true);
+        return;
+      }
+
+      // Single product - fill the form directly
+      const product = products[0];
+      setFormData((prev) => ({
+        ...prev,
+        name: product.name || prev.name,
+        description: product.description || prev.description,
+        category: product.category || prev.category,
+        pricingModel: product.pricingModel || prev.pricingModel,
+        basePrice: product.basePrice?.toString() || prev.basePrice,
+        billingFrequency: product.billingFrequency || prev.billingFrequency,
+        currency: product.currency || prev.currency,
+        features: product.features && product.features.length > 0 ? product.features : prev.features,
+        useCases: product.useCases && product.useCases.length > 0 ? product.useCases : prev.useCases,
+      }));
+
+      setExtractionSuccess(true);
+      setTimeout(() => setExtractionSuccess(false), 5000);
+    } catch (err) {
+      setExtractionError(err instanceof Error ? err.message : 'Extraction failed');
+    } finally {
+      setIsExtracting(false);
+    }
+  }, []);
+
+  const handleBulkImport = useCallback(async (products: ExtractedProduct[]) => {
+    setIsBulkImporting(true);
+    setError(null);
+
+    try {
+      // Create all selected products
+      await Promise.all(
+        products.map(async (product) => {
+          const payload = {
+            name: product.name || 'Unnamed Product',
+            description: product.description || undefined,
+            category: product.category || undefined,
+            pricingModel: product.pricingModel || undefined,
+            basePrice: product.basePrice || undefined,
+            currency: product.currency || 'USD',
+            billingFrequency: product.billingFrequency || undefined,
+            features: product.features || [],
+            useCases: product.useCases || [],
+            isActive: true,
+          };
+
+          const response = await fetch('/api/v1/knowledge/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(`Failed to create ${product.name}: ${data.error}`);
+          }
+
+          return response.json();
+        })
+      );
+
+      setBulkModalOpen(false);
+      router.push('/knowledge/products');
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to import products');
+    } finally {
+      setIsBulkImporting(false);
+    }
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -141,6 +256,38 @@ export function ProductForm({ initialData, productId, isEdit = false }: ProductF
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
+
+      {/* AI Extraction Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+            </svg>
+            Quick Fill with AI
+          </CardTitle>
+          <CardDescription>
+            Paste a screenshot or drag an image of a product page, spec sheet, or pricing table to auto-fill the form
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ImageDropZone
+            onImageSelect={handleExtraction}
+            isProcessing={isExtracting}
+            error={extractionError}
+          />
+          {extractionSuccess && (
+            <div className="mt-3 rounded-md bg-green-50 p-3">
+              <p className="text-sm text-green-700 flex items-center gap-2">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                Product information extracted! Review and edit the fields below.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -369,6 +516,14 @@ export function ProductForm({ initialData, productId, isEdit = false }: ProductF
           {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Product'}
         </Button>
       </div>
+
+      <BulkProductImportModal
+        open={bulkModalOpen}
+        onOpenChange={setBulkModalOpen}
+        products={extractedProducts}
+        onImport={handleBulkImport}
+        isImporting={isBulkImporting}
+      />
     </form>
   );
 }

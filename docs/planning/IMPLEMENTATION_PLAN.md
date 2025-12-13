@@ -2,8 +2,8 @@
 
 **Based on:** Sprint Plan Phase 0 MVP v1.2
 **Created:** December 2025
-**Last Updated:** December 12, 2025
-**Status:** Sprint 3 Complete - Proceeding to Sprint 4
+**Last Updated:** December 13, 2025
+**Status:** Sprint 3 Complete - Sprint 3.5 (AI Content Extraction) Planned
 **Note:** This is the consolidated execution plan. Historical spike documentation archived in `archive/SPRINT_PLAN.md`.
 
 ---
@@ -92,7 +92,8 @@ Continue MVP Development:
 2. ~~Sprint 1: Foundation~~ ✅ Complete
 3. ~~Sprint 2: Core Generation~~ ✅ Complete
 4. ~~Sprint 3: Context & Knowledge Base~~ ✅ Complete
-5. **Sprint 4:** Pricing Engine + Brand Features
+5. **Sprint 3.5:** AI Content Extraction (Quick Win) ← Current
+6. **Sprint 4:** Pricing Engine + Brand Features
 
 ---
 
@@ -325,6 +326,7 @@ This implementation plan outlines the complete development roadmap for Deeldesk.
 | **Sprint 1** | 1-2 | Foundation | Data model, auth, basic UI shell |
 | **Sprint 2** | 3-4 | Core Generation | Proposal creation, SSE streaming, LLM provider abstraction |
 | **Sprint 3** | 5-6 | Context & KB | Deal context, knowledge base, RAG |
+| **Sprint 3.5** | — | Quick Win | AI content extraction for KB (1-2 days) |
 | **Sprint 4** | 7-8 | Pricing Engine | 4-scenario pricing, governance |
 | **Sprint 5** | 9-10 | Strategy & Export | Strategy extraction, PPTX/PDF export |
 | **Sprint 6** | 11-12 | Resilience | Session persistence, error recovery |
@@ -559,6 +561,75 @@ All test cases from `docs/testing/SPRINT_2_UX_TEST_PLAN.md` passed:
 - [x] Company profile accessible from Knowledge Base navigation
 - [x] **Proposals generate correctly via both Anthropic API and AWS Bedrock**
 - [x] **Organization can be configured to use Bedrock provider**
+
+---
+
+## Sprint 3.5: AI Content Extraction (Quick Win)
+
+**Theme:** Reduce KB onboarding friction with AI-powered data extraction
+**Duration:** 1-2 days
+**Status:** PLANNED
+
+> **Context:** Sprint 3 delivered Products and Battlecards, but manual form input creates friction.
+> Sales reps screenshot competitor pages rather than typing. This quick win enables paste/upload
+> with Claude Vision AI extraction.
+
+### Goals
+- Enable clipboard paste + Claude Vision extraction for Products
+- Enable clipboard paste + Claude Vision extraction for Battlecards
+- Add drag-drop image upload as alternative to paste
+- Reduce KB item creation time from 5-10 minutes to <1 minute
+
+### User Stories (8 points)
+
+| ID | Story | Points | Status |
+|----|-------|--------|--------|
+| S3.5-001 | Paste screenshot of product page to auto-fill product form | 3 | Planned |
+| S3.5-002 | Paste screenshot of competitor page to auto-fill battlecard form | 3 | Planned |
+| S3.5-003 | Drag-drop image file as alternative to paste | 2 | Planned |
+
+### Technical Tasks (12 points)
+
+| ID | Task | Points | Status |
+|----|------|--------|--------|
+| T3.5-001 | Create `/api/v1/extract/product` endpoint with Vision API | 3 | Planned |
+| T3.5-002 | Create `/api/v1/extract/battlecard` endpoint with Vision API | 3 | Planned |
+| T3.5-003 | Add paste handler to ProductForm component | 2 | Planned |
+| T3.5-004 | Add paste handler to BattlecardForm component | 2 | Planned |
+| T3.5-005 | Create ImageDropZone reusable component | 2 | Planned |
+
+### Key Implementation Details
+
+**Extraction Flow:**
+```
+User pastes/uploads image → Base64 encode → Claude Vision API → JSON extraction → Form pre-fill → User review → Save
+```
+
+**Why Claude Vision:**
+- Already have Anthropic SDK configured
+- Claude Sonnet 4 has excellent vision capabilities
+- ~$0.01 per extraction (negligible cost)
+- No persistent storage needed (process and discard)
+
+**Files to Create:**
+- `app/api/v1/extract/product/route.ts`
+- `app/api/v1/extract/battlecard/route.ts`
+- `components/knowledge/image-drop-zone.tsx`
+- `lib/ai/extraction-prompts.ts`
+
+**Files to Modify:**
+- `components/knowledge/product-form.tsx` - Add paste handler
+- `components/knowledge/battlecard-form.tsx` - Add paste handler
+
+### Acceptance Criteria
+- [ ] User can paste screenshot and see form auto-fill with extracted data
+- [ ] User can drag-drop image file with same result
+- [ ] Non-relevant images show helpful error message
+- [ ] User can edit extracted data before saving
+- [ ] Extraction completes in <5 seconds
+
+### Detailed Implementation Plan
+See: [AI Content Extraction Plan](./AI_CONTENT_EXTRACTION_PLAN.md)
 
 ---
 
@@ -1012,7 +1083,7 @@ A story is considered "Done" when:
 
 ---
 
-**Document Version:** 1.3
-**Last Updated:** December 12, 2025
-**Next Review:** End of Sprint 2
+**Document Version:** 1.4
+**Last Updated:** December 13, 2025
+**Next Review:** End of Sprint 4
 
