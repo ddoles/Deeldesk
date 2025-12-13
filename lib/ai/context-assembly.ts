@@ -96,7 +96,7 @@ const MAX_CONTEXT_TOKENS = 100000; // Conservative limit for Claude
 const TOKENS_PER_CHAR = 0.25; // Rough estimate
 
 // Token budgets by category (percentages of remaining space after foundational)
-const TOKEN_BUDGETS = {
+const _TOKEN_BUDGETS = {
   companyProfile: 500, // Fixed ~500 tokens (foundational)
   brandContext: 200, // Fixed ~200 tokens (foundational)
   dealContext: 0.40, // 40% of remaining

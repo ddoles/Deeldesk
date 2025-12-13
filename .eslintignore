@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+dist/
+
+# Test/spike files (not production code)
+spikes/
+
+# Generated files
+*.generated.ts
+prisma/generated/

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,11 +22,7 @@ export default function OpportunityProposalsPage() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProposals();
-  }, [opportunityId]);
-
-  const fetchProposals = async () => {
+  const fetchProposals = useCallback(async () => {
     try {
       const response = await fetch(
         `/api/v1/proposals?opportunityId=${opportunityId}`
@@ -40,7 +36,11 @@ export default function OpportunityProposalsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [opportunityId]);
+
+  useEffect(() => {
+    fetchProposals();
+  }, [fetchProposals]);
 
   const statusColors: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-800',

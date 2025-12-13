@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/db/prisma';
-import { getProposalJobStatus, type ProposalJobProgress } from '@/lib/queue';
+import { getProposalJobStatus } from '@/lib/queue';
 
 /**
  * GET /api/v1/proposals/[id]/stream

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,11 +28,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
 
-  useEffect(() => {
-    fetchProducts();
-  }, [search, categoryFilter]);
-
-  async function fetchProducts() {
+  const fetchProducts = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
@@ -49,7 +45,11 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [search, categoryFilter]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   async function deleteProduct(id: string) {
     if (!confirm('Are you sure you want to delete this product?')) {

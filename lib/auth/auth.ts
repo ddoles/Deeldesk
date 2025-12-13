@@ -98,13 +98,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       return true;
     },
-    async jwt({ token, user, account, trigger }) {
+    async jwt({ token, user, account, trigger: _trigger }) {
       // Initial sign in
       if (user) {
         token.id = user.id;
 
         // Find or create user and organization
-        let dbUser = await prisma.user.findUnique({
+        const dbUser = await prisma.user.findUnique({
           where: { email: user.email! },
           include: {
             memberships: {

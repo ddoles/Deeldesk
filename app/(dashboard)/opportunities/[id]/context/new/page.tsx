@@ -67,7 +67,7 @@ export default function AddContextPage() {
     }
   }, []);
 
-  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+  const handlePaste = useCallback((_e: React.ClipboardEvent) => {
     // Let the textarea handle the paste naturally
   }, []);
 

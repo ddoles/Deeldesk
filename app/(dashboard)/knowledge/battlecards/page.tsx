@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,11 +28,7 @@ export default function BattlecardsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    fetchBattlecards();
-  }, [search]);
-
-  async function fetchBattlecards() {
+  const fetchBattlecards = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
@@ -47,7 +43,11 @@ export default function BattlecardsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [search]);
+
+  useEffect(() => {
+    fetchBattlecards();
+  }, [fetchBattlecards]);
 
   async function deleteBattlecard(id: string) {
     if (!confirm('Are you sure you want to delete this battlecard?')) {
