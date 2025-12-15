@@ -24,21 +24,86 @@ Deploy Deeldesk MVP to Railway with existing Neon database.
 
 ## Step 1: Prepare Neon Database
 
-### 1.1 Create New Database (or reuse existing)
+### 1.1 Create New Database in Neon
 
-If creating fresh database in Neon:
+#### Option A: Create Fresh Project
+
+1. Go to [console.neon.tech](https://console.neon.tech)
+2. Click **"New Project"**
+3. Configure:
+   - **Project name**: `deeldesk-prod` (or `deeldesk-staging`)
+   - **Postgres version**: 16 (recommended)
+   - **Region**: Choose closest to your users (e.g., `us-east-1`)
+4. Click **"Create Project"**
+
+#### Option B: Use Existing Project
+
+1. Go to [console.neon.tech](https://console.neon.tech)
+2. Select your existing project
+3. You can either:
+   - Use the default `neondb` database, OR
+   - Create a new database: **Databases** → **New Database** → Name it `deeldesk`
+
+### 1.2 Enable pgvector Extension
+
+**This is required** - Deeldesk uses vector embeddings for RAG search.
+
+1. In Neon Dashboard, click **"SQL Editor"** in the left sidebar
+2. Make sure the correct database is selected in the dropdown (e.g., `deeldesk` or `neondb`)
+3. Run this SQL command:
+
 ```sql
--- Connect to Neon and run:
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-### 1.2 Get Connection Strings
+4. You should see: `CREATE EXTENSION` as the result
+5. Verify it's enabled by running:
 
-From Neon Dashboard → Connection Details:
-- **DATABASE_URL**: `postgresql://user:pass@ep-xxx.region.neon.tech/dbname?sslmode=require`
-- **DIRECT_URL**: Same as above (needed for Prisma migrations)
+```sql
+SELECT * FROM pg_extension WHERE extname = 'vector';
+```
 
-**Important**: Use the "pooled" connection string for `DATABASE_URL` if available.
+You should see one row with `vector` in the results.
+
+### 1.3 Get Connection Strings
+
+1. In Neon Dashboard, click **"Connection Details"** (or the **"Connect"** button)
+2. You'll see a connection string like:
+
+```
+postgresql://username:password@ep-cool-name-123456.us-east-1.aws.neon.tech/dbname?sslmode=require
+```
+
+3. **Important**: Click the **"Pooled connection"** toggle to get the pooled URL
+   - Pooled URL contains `-pooler` in the hostname
+   - Example: `ep-cool-name-123456-pooler.us-east-1.aws.neon.tech`
+
+4. Copy both connection strings:
+
+| Variable | Connection Type | Use For |
+|----------|-----------------|---------|
+| `DATABASE_URL` | **Pooled** (with `-pooler`) | Application queries |
+| `DIRECT_URL` | **Direct** (without `-pooler`) | Prisma migrations |
+
+**Example:**
+```env
+# Pooled - for app (handles connection limits)
+DATABASE_URL=postgresql://user:pass@ep-cool-name-123456-pooler.us-east-1.aws.neon.tech/deeldesk?sslmode=require
+
+# Direct - for migrations (bypasses pooler)
+DIRECT_URL=postgresql://user:pass@ep-cool-name-123456.us-east-1.aws.neon.tech/deeldesk?sslmode=require
+```
+
+### 1.4 Test Connection (Optional)
+
+From your local terminal, verify the connection works:
+
+```bash
+# Install psql if needed: brew install postgresql
+psql "postgresql://user:pass@ep-xxx.neon.tech/deeldesk?sslmode=require" -c "SELECT version();"
+```
+
+You should see the PostgreSQL version output.
 
 ---
 
