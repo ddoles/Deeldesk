@@ -269,6 +269,69 @@ export default function CompanyProfilePage() {
         </Alert>
       )}
 
+      {/* Profile Summary Card */}
+      {formData.summary && (
+        <Card className="bg-gradient-to-r from-gray-50 to-white border-gray-200">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {/* Summary */}
+              <p className="text-gray-700 leading-relaxed">{formData.summary}</p>
+
+              {/* Key Info Row */}
+              <div className="flex flex-wrap gap-4 pt-2 border-t border-gray-100">
+                {formData.industry && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-500">Industry:</span>
+                    <span className="font-medium text-gray-900">{formData.industry}</span>
+                  </div>
+                )}
+                {formData.marketSegment && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-500">Segment:</span>
+                    <span className="font-medium text-gray-900">{formData.marketSegment}</span>
+                  </div>
+                )}
+                {formData.website && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-500">Website:</span>
+                    <a
+                      href={formData.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-blue-600 hover:underline"
+                    >
+                      {formData.website.replace(/^https?:\/\//, '')}
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Differentiators */}
+              {formData.keyDifferentiators.length > 0 && (
+                <div className="pt-2 border-t border-gray-100">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Key Differentiators</span>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.keyDifferentiators.slice(0, 4).map((item, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+                      >
+                        {item.length > 50 ? item.substring(0, 50) + '...' : item}
+                      </span>
+                    ))}
+                    {formData.keyDifferentiators.length > 4 && (
+                      <span className="text-xs text-gray-500 self-center">
+                        +{formData.keyDifferentiators.length - 4} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
