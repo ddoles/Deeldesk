@@ -18,9 +18,6 @@ interface CompanyProfile {
   keyDifferentiators: string[];
   industry: string | null;
   marketSegment: string | null;
-  companySize: string | null;
-  foundedYear: number | null;
-  headquarters: string | null;
   website: string | null;
   generatedAt: string | null;
   generatedBy: string | null;
@@ -53,9 +50,6 @@ export default function CompanyProfilePage() {
     keyDifferentiators: [] as string[],
     industry: '',
     marketSegment: '',
-    companySize: '',
-    foundedYear: '',
-    headquarters: '',
     website: '',
   });
 
@@ -83,9 +77,6 @@ export default function CompanyProfilePage() {
             keyDifferentiators: data.profile.keyDifferentiators || [],
             industry: data.profile.industry || '',
             marketSegment: data.profile.marketSegment || '',
-            companySize: data.profile.companySize || '',
-            foundedYear: data.profile.foundedYear?.toString() || '',
-            headquarters: data.profile.headquarters || '',
             website: data.profile.website || '',
           });
         }
@@ -127,9 +118,6 @@ export default function CompanyProfilePage() {
         keyDifferentiators: formData.keyDifferentiators,
         industry: formData.industry || null,
         marketSegment: formData.marketSegment || null,
-        companySize: formData.companySize || null,
-        foundedYear: formData.foundedYear ? parseInt(formData.foundedYear) : null,
-        headquarters: formData.headquarters || null,
         website: formData.website || null,
       };
 
@@ -200,9 +188,6 @@ export default function CompanyProfilePage() {
         keyDifferentiators: data.profile.keyDifferentiators || [],
         industry: data.profile.industry || '',
         marketSegment: data.profile.marketSegment || '',
-        companySize: data.profile.companySize || '',
-        foundedYear: data.profile.foundedYear?.toString() || '',
-        headquarters: data.profile.headquarters || '',
         website: data.profile.website || '',
       });
       setSuccess('Company profile generated! Please review and edit as needed.');
@@ -425,55 +410,15 @@ export default function CompanyProfilePage() {
             <CardDescription>Additional company information</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-4">
-              <div className="space-y-2">
-                <Label htmlFor="website">Website</Label>
-                <Input
-                  id="website"
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => updateField('website', e.target.value)}
-                  placeholder="https://example.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="foundedYear">Founded Year</Label>
-                <Input
-                  id="foundedYear"
-                  type="number"
-                  value={formData.foundedYear}
-                  onChange={(e) => updateField('foundedYear', e.target.value)}
-                  placeholder="2020"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="companySize">Company Size</Label>
-                <select
-                  id="companySize"
-                  value={formData.companySize}
-                  onChange={(e) => updateField('companySize', e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                >
-                  <option value="">Select size</option>
-                  <option value="startup">Startup (1-10)</option>
-                  <option value="small">Small (11-50)</option>
-                  <option value="medium">Medium (51-200)</option>
-                  <option value="large">Large (201-1000)</option>
-                  <option value="enterprise">Enterprise (1000+)</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="headquarters">Headquarters</Label>
-                <Input
-                  id="headquarters"
-                  value={formData.headquarters}
-                  onChange={(e) => updateField('headquarters', e.target.value)}
-                  placeholder="City, Country"
-                />
-              </div>
+            <div className="max-w-md space-y-2">
+              <Label htmlFor="website">Website</Label>
+              <Input
+                id="website"
+                type="url"
+                value={formData.website}
+                onChange={(e) => updateField('website', e.target.value)}
+                placeholder="https://example.com"
+              />
             </div>
           </CardContent>
         </Card>
