@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,6 +38,11 @@ export default function CompanyProfilePage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmCompanyName, setConfirmCompanyName] = useState('');
+  const [confirmWebsite, setConfirmWebsite] = useState('');
+  const [confirmIndustry, setConfirmIndustry] = useState('');
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
   const [formData, setFormData] = useState({
     summary: '',
@@ -57,6 +63,7 @@ export default function CompanyProfilePage() {
 
   useEffect(() => {
     fetchProfile();
+    setPortalContainer(document.body);
   }, []);
 
   async function fetchProfile() {
@@ -147,7 +154,21 @@ export default function CompanyProfilePage() {
     }
   }
 
-  async function handleGenerate() {
+  function openGenerateModal() {
+    // Pre-fill the confirmation form with current values
+    setConfirmCompanyName(organizationName || '');
+    setConfirmWebsite(formData.website || '');
+    setConfirmIndustry(formData.industry || '');
+    setShowConfirmModal(true);
+  }
+
+  async function handleConfirmedGenerate() {
+    if (!confirmCompanyName.trim()) {
+      setError('Please enter your company name');
+      return;
+    }
+
+    setShowConfirmModal(false);
     setGenerating(true);
     setError(null);
     setSuccess(null);
@@ -157,9 +178,9 @@ export default function CompanyProfilePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          companyName: organizationName,
-          website: formData.website || undefined,
-          industry: formData.industry || undefined,
+          companyName: confirmCompanyName.trim(),
+          website: confirmWebsite || undefined,
+          industry: confirmIndustry || undefined,
         }),
       });
 
@@ -212,7 +233,7 @@ export default function CompanyProfilePage() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={handleGenerate}
+            onClick={openGenerateModal}
             disabled={generating}
           >
             {generating ? (
@@ -463,6 +484,93 @@ export default function CompanyProfilePage() {
           Last updated: {profile.lastEditedAt ? new Date(profile.lastEditedAt).toLocaleString() : 'Never'}
           {' '}| Version: {profile.version}
         </p>
+      )}
+
+      {/* Company Name Confirmation Modal */}
+      {showConfirmModal && portalContainer && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 9998,
+            }}
+            onClick={() => setShowConfirmModal(false)}
+          />
+          <div
+            className="bg-white rounded-lg shadow-xl mx-4 w-full max-w-md"
+            style={{ position: 'relative', zIndex: 10000 }}
+          >
+            <div className="p-6 border-b">
+              <h2 className="text-lg font-semibold">Confirm Your Company</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Please confirm your company details so AI can generate an accurate profile.
+              </p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="confirm-company-name">Company Name *</Label>
+                <Input
+                  id="confirm-company-name"
+                  value={confirmCompanyName}
+                  onChange={(e) => setConfirmCompanyName(e.target.value)}
+                  placeholder="Enter your company name"
+                  autoFocus
+                />
+                <p className="text-xs text-gray-500">
+                  This is YOUR company, not the software you&apos;re using.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-website">Website (optional)</Label>
+                <Input
+                  id="confirm-website"
+                  type="url"
+                  value={confirmWebsite}
+                  onChange={(e) => setConfirmWebsite(e.target.value)}
+                  placeholder="https://yourcompany.com"
+                />
+                <p className="text-xs text-gray-500">
+                  Helps AI find accurate information about your company.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-industry">Industry (optional)</Label>
+                <Input
+                  id="confirm-industry"
+                  value={confirmIndustry}
+                  onChange={(e) => setConfirmIndustry(e.target.value)}
+                  placeholder="e.g., Software, Healthcare, Finance"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t bg-gray-50 flex justify-end gap-3 rounded-b-lg">
+              <Button variant="outline" onClick={() => setShowConfirmModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmedGenerate} disabled={!confirmCompanyName.trim()}>
+                Generate Profile
+              </Button>
+            </div>
+          </div>
+        </div>,
+        portalContainer
       )}
     </div>
   );

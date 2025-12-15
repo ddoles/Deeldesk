@@ -62,8 +62,12 @@ export interface BrandContext {
 
 export interface CompanyProfileContext {
   summary?: string;
+  companyOverview?: string;
   valueProposition?: string;
   targetCustomers?: string;
+  revenueModel?: string;
+  industry?: string;
+  marketSegment?: string;
   keyDifferentiators?: string[];
 }
 
@@ -97,7 +101,7 @@ const TOKENS_PER_CHAR = 0.25; // Rough estimate
 
 // Token budgets by category (percentages of remaining space after foundational)
 const _TOKEN_BUDGETS = {
-  companyProfile: 500, // Fixed ~500 tokens (foundational)
+  companyProfile: 800, // Fixed ~800 tokens (foundational, includes overview + business model)
   brandContext: 200, // Fixed ~200 tokens (foundational)
   dealContext: 0.40, // 40% of remaining
   products: 0.30, // 30% of remaining
@@ -165,8 +169,12 @@ export async function assembleContext(
       where: { organizationId },
       select: {
         summary: true,
+        companyOverview: true,
         valueProposition: true,
         targetCustomers: true,
+        revenueModel: true,
+        industry: true,
+        marketSegment: true,
         keyDifferentiators: true,
       },
     }),
@@ -196,8 +204,12 @@ export async function assembleContext(
   const companyProfileContext: CompanyProfileContext | undefined = companyProfile
     ? {
         summary: companyProfile.summary || undefined,
+        companyOverview: companyProfile.companyOverview || undefined,
         valueProposition: companyProfile.valueProposition || undefined,
         targetCustomers: companyProfile.targetCustomers || undefined,
+        revenueModel: companyProfile.revenueModel || undefined,
+        industry: companyProfile.industry || undefined,
+        marketSegment: companyProfile.marketSegment || undefined,
         keyDifferentiators: companyProfile.keyDifferentiators || undefined,
       }
     : undefined;
@@ -338,11 +350,23 @@ export function buildSystemPrompt(context: AssembledContext): string {
     if (context.companyProfile.summary) {
       parts.push(context.companyProfile.summary);
     }
+    if (context.companyProfile.companyOverview) {
+      parts.push(`\nCOMPANY OVERVIEW: ${context.companyProfile.companyOverview}`);
+    }
+    if (context.companyProfile.industry) {
+      parts.push(`INDUSTRY: ${context.companyProfile.industry}`);
+    }
+    if (context.companyProfile.marketSegment) {
+      parts.push(`MARKET SEGMENT: ${context.companyProfile.marketSegment}`);
+    }
     if (context.companyProfile.valueProposition) {
       parts.push(`\nVALUE PROPOSITION: ${context.companyProfile.valueProposition}`);
     }
     if (context.companyProfile.targetCustomers) {
       parts.push(`TARGET CUSTOMERS: ${context.companyProfile.targetCustomers}`);
+    }
+    if (context.companyProfile.revenueModel) {
+      parts.push(`REVENUE MODEL: ${context.companyProfile.revenueModel}`);
     }
     if (context.companyProfile.keyDifferentiators && context.companyProfile.keyDifferentiators.length > 0) {
       parts.push(`KEY DIFFERENTIATORS:\n${context.companyProfile.keyDifferentiators.map((d) => `- ${d}`).join('\n')}`);
