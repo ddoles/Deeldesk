@@ -27,10 +27,7 @@ export async function GET() {
     const redis = new Redis(redisUrl, {
       maxRetriesPerRequest: 1,
       connectTimeout: 5000,
-      retryDelayOnFailover: 100,
       enableReadyCheck: false,
-      // Don't use TLS for internal Railway connections
-      tls: redisUrl.includes('railway.internal') ? undefined : undefined,
     });
     const pong = await redis.ping();
     health.services.redis = pong === 'PONG' ? 'connected' : 'disconnected';
