@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserActions } from './user-actions';
 
+// Force dynamic rendering - page requires auth and database
+export const dynamic = 'force-dynamic';
+
 export default async function AdminUsersPage() {
   const session = await auth();
   const users = await prisma.user.findMany({
