@@ -24,11 +24,22 @@ export async function GET() {
   try {
     const Redis = (await import('ioredis')).default;
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+
+    // Parse URL to check if we need TLS (Railway public URLs need TLS)
+    const url = new URL(redisUrl);
+    const isPublicUrl = !url.hostname.includes('.internal');
+
     const redis = new Redis(redisUrl, {
       maxRetriesPerRequest: 1,
-      connectTimeout: 5000,
+      connectTimeout: 10000,
+      commandTimeout: 10000,
       enableReadyCheck: false,
+      lazyConnect: true,
+      // Enable TLS for public Railway URLs
+      ...(isPublicUrl && { tls: {} }),
     });
+
+    await redis.connect();
     const pong = await redis.ping();
     health.services.redis = pong === 'PONG' ? 'connected' : 'disconnected';
     await redis.quit();
@@ -37,6 +48,7 @@ export async function GET() {
     // Include error details for debugging
     (health as Record<string, unknown>).redisError = error instanceof Error ? error.message : 'Unknown error';
     (health as Record<string, unknown>).redisUrl = process.env.REDIS_URL ? 'set' : 'not set';
+    (health as Record<string, unknown>).redisHost = process.env.REDIS_URL ? new URL(process.env.REDIS_URL).hostname : 'not set';
   }
 
   const statusCode = health.status === 'ok' ? 200 : 503;
