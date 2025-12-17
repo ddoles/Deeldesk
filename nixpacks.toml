@@ -1,0 +1,14 @@
+[variables]
+NODE_ENV = "production"
+# Dummy URL for Prisma validation at build time (real URL used at runtime)
+DATABASE_URL = "postgresql://build:build@localhost:5432/build"
+DIRECT_URL = "postgresql://build:build@localhost:5432/build"
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"
