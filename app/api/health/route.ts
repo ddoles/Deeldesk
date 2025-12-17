@@ -23,16 +23,21 @@ export async function GET() {
   // Check Redis connection (if available)
   try {
     const Redis = (await import('ioredis')).default;
-    const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    const redis = new Redis(redisUrl, {
       maxRetriesPerRequest: 1,
       connectTimeout: 5000,
+      lazyConnect: true,
     });
+    await redis.connect();
     await redis.ping();
     health.services.redis = 'connected';
     await redis.quit();
-  } catch {
+  } catch (error) {
     health.services.redis = 'disconnected';
-    // Redis being down is not critical for health check
+    // Include error details for debugging
+    (health as Record<string, unknown>).redisError = error instanceof Error ? error.message : 'Unknown error';
+    (health as Record<string, unknown>).redisUrl = process.env.REDIS_URL ? 'set' : 'not set';
   }
 
   const statusCode = health.status === 'ok' ? 200 : 503;
