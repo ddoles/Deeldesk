@@ -27,11 +27,13 @@ export async function GET() {
     const redis = new Redis(redisUrl, {
       maxRetriesPerRequest: 1,
       connectTimeout: 5000,
-      lazyConnect: true,
+      retryDelayOnFailover: 100,
+      enableReadyCheck: false,
+      // Don't use TLS for internal Railway connections
+      tls: redisUrl.includes('railway.internal') ? undefined : undefined,
     });
-    await redis.connect();
-    await redis.ping();
-    health.services.redis = 'connected';
+    const pong = await redis.ping();
+    health.services.redis = pong === 'PONG' ? 'connected' : 'disconnected';
     await redis.quit();
   } catch (error) {
     health.services.redis = 'disconnected';
