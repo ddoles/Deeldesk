@@ -59,11 +59,11 @@ Before testing, ensure:
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | On `/knowledge/products` | Products tab is active (highlighted) | |
-| 2 | Click "Battlecards" tab | Navigates to `/knowledge/battlecards` | |
-| 3 | Click "Company Profile" tab | Navigates to `/knowledge/company-profile` | |
-| 4 | Click "Products" tab | Returns to `/knowledge/products` | |
-| 5 | Verify URL changes | URL matches current tab | |
+| 1 | On `/knowledge/products` | Products tab is active (highlighted) |Pass|
+| 2 | Click "Battlecards" tab | Navigates to `/knowledge/battlecards` |Pass|
+| 3 | Click "Company Profile" tab | Navigates to `/knowledge/company-profile` |Pass|
+| 4 | Click "Products" tab | Returns to `/knowledge/products` |Pass|
+| 5 | Verify URL changes | URL matches current tab |Pass|
 
 **Notes:** _______________
 
@@ -77,9 +77,9 @@ Before testing, ensure:
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | Navigate to `/knowledge/products` | Products page loads | |
-| 2 | With no products | Empty state message displays | |
-| 3 | Verify "Add Product" button | Button is visible and clickable | |
+| 1 | Navigate to `/knowledge/products` | Products page loads |Pass|
+| 2 | With no products | Empty state message displays |Pass|
+| 3 | Verify "Add Product" button | Button is visible and clickable |Pass|
 
 **Notes:** _______________
 
@@ -108,18 +108,18 @@ Use Cases:
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | Click "Add Product" button | Navigates to `/knowledge/products/new` | |
-| 2 | Leave name empty, try submit | Validation error shows | |
-| 3 | Fill in product name | Name field accepts input | |
-| 4 | Select/enter category | Category field works | |
-| 5 | Enter description | Description textarea works | |
-| 6 | Select pricing model | Dropdown works | |
-| 7 | Enter base price | Number input works | |
-| 8 | Select billing frequency | Dropdown works | |
-| 9 | Add features (one per line) | Feature inputs work | |
-| 10 | Add use cases | Use case inputs work | |
-| 11 | Click "Create Product" | Form submits, redirects to products list | |
-| 12 | Verify product in list | New product appears in list | |
+| 1 | Click "Add Product" button | Navigates to `/knowledge/products/new` |Pass|
+| 2 | Leave name empty, try submit | Validation error shows |Pass|
+| 3 | Fill in product name | Name field accepts input |Pass|
+| 4 | Select/enter category | Category field works |Pass|
+| 5 | Enter description | Description textarea works |Pass|
+| 6 | Select pricing model | Dropdown works |Pass|
+| 7 | Enter base price | Number input works |Pass|
+| 8 | Select billing frequency | Dropdown works |Pass|
+| 9 | Add features (one per line) | Feature inputs work |Pass|
+| 10 | Add use cases | Use case inputs work |Pass|
+| 11 | Click "Create Product" | Form submits, redirects to products list |Pass|
+| 12 | Verify product in list | New product appears in list |Pass|
 
 **Notes:** _______________
 
@@ -131,13 +131,13 @@ Use Cases:
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | On products list | Products display | |
+| 1 | On products list | Products display |Pass|
 | 2 | Click on a product row or "Edit" | Navigates to `/knowledge/products/[id]` | |
-| 3 | Verify form pre-filled | Existing data loads in form | |
-| 4 | Modify the description | Field accepts changes | |
-| 5 | Add a new feature | Feature added to list | |
-| 6 | Click "Save Changes" | Form submits successfully | |
-| 7 | Navigate back to list | Updated product shows changes | |
+| 3 | Verify form pre-filled | Existing data loads in form |Pass|
+| 4 | Modify the description | Field accepts changes |Pass|
+| 5 | Add a new feature | Feature added to list |Pass|
+| 6 | Click "Save Changes" | Form submits successfully |Pass|
+| 7 | Navigate back to list | Updated product shows changes |Pass|
 
 **Notes:** _______________
 
@@ -149,12 +149,12 @@ Use Cases:
 
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
-| 1 | On product edit page | Delete button visible | |
-| 2 | Click "Delete Product" | Confirmation dialog appears | |
-| 3 | Cancel deletion | Dialog closes, product remains | |
-| 4 | Click "Delete Product" again | Confirmation dialog appears | |
-| 5 | Confirm deletion | Product deleted, redirects to list | |
-| 6 | Verify product removed | Product no longer in list | |
+| 1 | On product edit page | Delete button visible |Pass|
+| 2 | Click "Delete Product" | Confirmation dialog appears |Pass|
+| 3 | Cancel deletion | Dialog closes, product remains |Pass|
+| 4 | Click "Delete Product" again | Confirmation dialog appears |Pass|
+| 5 | Confirm deletion | Product deleted, redirects to list |Pass|
+| 6 | Verify product removed | Product no longer in list |Pass|
 
 **Notes:** _______________
 

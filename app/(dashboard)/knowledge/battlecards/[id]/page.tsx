@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/db/prisma';
 import { BattlecardForm } from '@/components/knowledge/battlecard-form';
+// Force dynamic rendering - requires auth/database
+export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ id: string }>;

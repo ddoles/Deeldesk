@@ -2,6 +2,8 @@ import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/db/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrgSettingsForm } from './org-settings-form';
+// Force dynamic rendering - requires auth/database
+export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
   const session = await auth();

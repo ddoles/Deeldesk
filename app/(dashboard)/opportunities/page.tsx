@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db/prisma';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+// Force dynamic rendering - requires auth/database
+export const dynamic = 'force-dynamic';
 
 const statusColors = {
   open: 'bg-green-100 text-green-800',

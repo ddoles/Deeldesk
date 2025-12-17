@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+// Force dynamic rendering - requires auth/database
+export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
   // Fetch platform-wide stats

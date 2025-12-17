@@ -1,6 +1,8 @@
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/db/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+// Force dynamic rendering - requires auth/database
+export const dynamic = 'force-dynamic';
 
 const roleColors = {
   owner: 'bg-purple-100 text-purple-800',

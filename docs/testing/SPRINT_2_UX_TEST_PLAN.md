@@ -163,7 +163,7 @@ including 24/7 support and custom integrations. The deal is worth $50,000 annual
 | Step | Action | Expected Result | Pass/Fail |
 |------|--------|-----------------|-----------|
 | 1 | Navigate to `/opportunities/[id]/proposals` | Proposals list displays |pass|
-| 2 | Check proposal cards | Shows version, status, date |pass version and status; fail no date shown|
+| 2 | Check proposal cards | Shows version, status, date |pass|
 | 3 | Verify status badges | Correct colors for each status |pass|
 | 4 | Click "View Proposal" on complete one | Opens proposal viewer |pass|
 | 5 | Verify breadcrumb | Shows opportunity name |pass|

@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+// Force dynamic rendering - requires auth/database
+export const dynamic = 'force-dynamic';
 
 const planColors = {
   free: 'bg-gray-100 text-gray-800',
