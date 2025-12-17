@@ -3,6 +3,9 @@ import { auth } from '@/lib/auth/auth';
 import { Sidebar } from '@/components/layout/sidebar';
 import { UserMenu } from '@/components/layout/user-menu';
 
+// Force dynamic rendering for all dashboard pages
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {

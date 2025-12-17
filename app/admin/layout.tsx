@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth/auth';
 import { UserMenu } from '@/components/layout/user-menu';
 
+// Force dynamic rendering for all admin pages
+export const dynamic = 'force-dynamic';
+
 const adminNavigation = [
   {
     name: 'Dashboard',
